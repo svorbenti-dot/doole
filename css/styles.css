@@ -164,3 +164,158 @@ h1, h2, h3 {
 .toast.toast-error {
   background: var(--color-danger);
 }
+
+/* Akkordeon (Mahlzeiten-Karten) */
+.accordion-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  min-height: var(--touch-min);
+}
+
+.accordion-emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.accordion-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.accordion-name {
+  font-family: var(--font-headline);
+  font-size: var(--font-size-card-title);
+  color: var(--color-secondary);
+}
+
+.accordion-preview {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.accordion-chevron {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform 200ms ease;
+}
+
+.accordion-header.open .accordion-chevron {
+  transform: rotate(90deg);
+}
+
+.accordion-body {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+/* Chips (z.B. Portionsgröße) */
+.chip-group {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.chip {
+  min-height: var(--touch-min);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+}
+
+.chip.selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Kreis-Bewertung (z.B. Sättigung) */
+.circle-rating {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.circle {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  cursor: pointer;
+}
+
+.circle.selected {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* Emoji-Picker (Stimmung, Schlafqualität) */
+.emoji-picker {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.emoji-btn {
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  border-radius: var(--space-2);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: var(--space-1);
+}
+
+.emoji-btn.selected {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.emoji-btn-labeled {
+  flex-direction: column;
+  gap: 2px;
+  width: 72px;
+  height: auto;
+  padding: var(--space-2);
+}
+
+.emoji-btn-labeled .emoji-btn-caption {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+
+.emoji-btn-labeled.selected .emoji-btn-caption {
+  color: #fff;
+}

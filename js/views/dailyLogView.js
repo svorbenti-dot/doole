@@ -1,33 +1,78 @@
 // Bildschirm: Tagesprotokoll für ein Profil an einem bestimmten Tag.
-import { getDailyLog, saveDailyLog, MEAL_SLOT_LABELS } from "../dailyLog.js";
+import {
+  getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
+  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML,
+} from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
-import { ICON_MEAL, ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH } from "../icons.js";
+import { ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH, ICON_CHEVRON_RIGHT } from "../icons.js";
+
+function mealPreviewText(meal) {
+  const parts = [];
+  if (meal.zeit) parts.push(meal.zeit);
+  parts.push(meal.was ? meal.was : "Noch nichts eingetragen");
+  return parts.join(" · ");
+}
+
+function chipGroupHtml(name, options, currentValue) {
+  return options.map((opt) => `
+    <button type="button" class="chip ${currentValue === opt.value ? "selected" : ""}" data-chip-group="${name}" data-chip-value="${opt.value}">${opt.label}</button>
+  `).join("");
+}
+
+function circleRatingHtml(name, currentValue) {
+  return [1, 2, 3, 4, 5].map((n) => `
+    <button type="button" class="circle ${currentValue === n ? "selected" : ""}" data-circle-group="${name}" data-circle-value="${n}" aria-label="${n} von 5">${n}</button>
+  `).join("");
+}
+
+function emojiPickerHtml(name, options, currentValue) {
+  return options.map((opt) => `
+    <button type="button" class="emoji-btn ${currentValue === opt.value ? "selected" : ""}" data-emoji-group="${name}" data-emoji-value="${opt.value}" aria-label="${opt.label}">${opt.emoji}</button>
+  `).join("");
+}
 
 function mealCardHtml(slot, meal) {
   const label = MEAL_SLOT_LABELS[slot];
   return `
-    <div class="section-card" data-meal-slot="${slot}">
-      <h3>${ICON_MEAL} ${label}</h3>
-      <div class="field">
-        <label for="${slot}-zeit">Uhrzeit</label>
-        <input id="${slot}-zeit" type="time" value="${meal.zeit || ""}">
-      </div>
-      <div class="field">
-        <label for="${slot}-was">Was gegessen</label>
-        <input id="${slot}-was" type="text" value="${meal.was || ""}">
-      </div>
-      <div class="field">
-        <label for="${slot}-getraenk">Getränk</label>
-        <input id="${slot}-getraenk" type="text" value="${meal.getraenk || ""}">
-      </div>
-      <div class="field">
-        <label for="${slot}-portion">Portionsgröße</label>
-        <input id="${slot}-portion" type="text" value="${meal.portion || ""}">
-      </div>
-      <div class="field">
-        <label for="${slot}-saettigung">Sättigung (1-5)</label>
-        <input id="${slot}-saettigung" type="number" min="1" max="5" value="${meal.saettigung ?? ""}">
+    <div class="section-card accordion-card" data-meal-slot="${slot}">
+      <button type="button" class="accordion-header" data-accordion-toggle="${slot}" aria-expanded="false" aria-controls="body-${slot}">
+        <span class="accordion-emoji" aria-hidden="true">${MEAL_SLOT_EMOJIS[slot]}</span>
+        <span class="accordion-title">
+          <span class="accordion-name">${label}</span>
+          <span class="accordion-preview" data-accordion-preview="${slot}">${mealPreviewText(meal)}</span>
+        </span>
+        <span class="accordion-chevron" aria-hidden="true">${ICON_CHEVRON_RIGHT}</span>
+      </button>
+      <div class="accordion-body" id="body-${slot}" hidden>
+        <div class="field">
+          <label for="${slot}-zeit">Uhrzeit</label>
+          <input id="${slot}-zeit" type="time" value="${meal.zeit || ""}">
+        </div>
+        <div class="field">
+          <label for="${slot}-was">Was gegessen</label>
+          <textarea id="${slot}-was" rows="3">${meal.was || ""}</textarea>
+        </div>
+        <div class="field">
+          <label for="${slot}-getraenk">Getränk</label>
+          <input id="${slot}-getraenk" type="text" value="${meal.getraenk || ""}">
+        </div>
+        <div class="field">
+          <label>Portionsgröße</label>
+          <div class="chip-group">${chipGroupHtml("portion", PORTION_OPTIONS, meal.portion)}</div>
+        </div>
+        <div class="field">
+          <label>Sättigung</label>
+          <div class="circle-rating">${circleRatingHtml("saettigung", meal.saettigung)}</div>
+        </div>
+        <div class="field">
+          <label>Gefühl vorher</label>
+          <div class="emoji-picker">${emojiPickerHtml("gefuehlVorher", GEFUEHL_VORHER, meal.gefuehlVorher)}</div>
+        </div>
+        <div class="field">
+          <label>Gefühl nachher</label>
+          <div class="emoji-picker">${emojiPickerHtml("gefuehlNachher", GEFUEHL_NACHHER, meal.gefuehlNachher)}</div>
+        </div>
       </div>
     </div>
   `;
@@ -118,13 +163,71 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     }
   }
 
+  let openMealSlot = null;
+
+  function refreshAccordionPreviews() {
+    Object.keys(log.meals).forEach((s) => {
+      const previewEl = container.querySelector(`[data-accordion-preview="${s}"]`);
+      previewEl.textContent = mealPreviewText(log.meals[s]);
+    });
+  }
+
+  function setOpenMealSlot(slot) {
+    refreshAccordionPreviews();
+    openMealSlot = slot;
+    Object.keys(log.meals).forEach((s) => {
+      const card = container.querySelector(`[data-meal-slot="${s}"]`);
+      const header = card.querySelector(".accordion-header");
+      const body = card.querySelector(".accordion-body");
+      const isOpen = s === slot;
+      body.hidden = !isOpen;
+      header.setAttribute("aria-expanded", String(isOpen));
+      header.classList.toggle("open", isOpen);
+    });
+  }
+
   Object.keys(log.meals).forEach((slot) => {
     const card = container.querySelector(`[data-meal-slot="${slot}"]`);
+
+    card.querySelector(".accordion-header").addEventListener("click", () => {
+      setOpenMealSlot(openMealSlot === slot ? null : slot);
+    });
+
     card.querySelector(`#${slot}-zeit`).addEventListener("change", (e) => { log.meals[slot].zeit = e.target.value; persist(); });
     card.querySelector(`#${slot}-was`).addEventListener("change", (e) => { log.meals[slot].was = e.target.value; persist(); });
     card.querySelector(`#${slot}-getraenk`).addEventListener("change", (e) => { log.meals[slot].getraenk = e.target.value; persist(); });
-    card.querySelector(`#${slot}-portion`).addEventListener("change", (e) => { log.meals[slot].portion = e.target.value; persist(); });
-    card.querySelector(`#${slot}-saettigung`).addEventListener("change", (e) => { log.meals[slot].saettigung = e.target.value ? Number(e.target.value) : null; persist(); });
+
+    card.querySelectorAll(`[data-chip-group="portion"]`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        log.meals[slot].portion = btn.dataset.chipValue;
+        card.querySelectorAll(`[data-chip-group="portion"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+        persist();
+      });
+    });
+
+    card.querySelectorAll(`[data-circle-group="saettigung"]`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        log.meals[slot].saettigung = Number(btn.dataset.circleValue);
+        card.querySelectorAll(`[data-circle-group="saettigung"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+        persist();
+      });
+    });
+
+    card.querySelectorAll(`[data-emoji-group="gefuehlVorher"]`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        log.meals[slot].gefuehlVorher = Number(btn.dataset.emojiValue);
+        card.querySelectorAll(`[data-emoji-group="gefuehlVorher"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+        persist();
+      });
+    });
+
+    card.querySelectorAll(`[data-emoji-group="gefuehlNachher"]`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        log.meals[slot].gefuehlNachher = Number(btn.dataset.emojiValue);
+        card.querySelectorAll(`[data-emoji-group="gefuehlNachher"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+        persist();
+      });
+    });
   });
 
   container.querySelector("#water-ml").addEventListener("change", (e) => { log.waterMl = e.target.value ? Number(e.target.value) : null; persist(); });
