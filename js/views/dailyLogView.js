@@ -6,7 +6,12 @@ import {
 import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
 import { ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH, ICON_CHEVRON_RIGHT } from "../icons.js";
+import { escapeHtml } from "../escapeHtml.js";
 
+// Liefert den Vorschautext für die Akkordeon-Überschrift. Enthält rohen
+// (nicht escapten) Nutzertext — sicher für `.textContent`-Zuweisung
+// (siehe refreshAccordionPreviews), MUSS aber escaped werden, bevor er in
+// ein innerHTML-Template interpoliert wird (siehe mealCardHtml).
 function mealPreviewText(meal) {
   const parts = [];
   if (meal.zeit) parts.push(meal.zeit);
@@ -40,22 +45,22 @@ function mealCardHtml(slot, meal) {
         <span class="accordion-emoji" aria-hidden="true">${MEAL_SLOT_EMOJIS[slot]}</span>
         <span class="accordion-title">
           <span class="accordion-name">${label}</span>
-          <span class="accordion-preview" data-accordion-preview="${slot}">${mealPreviewText(meal)}</span>
+          <span class="accordion-preview" data-accordion-preview="${slot}">${escapeHtml(mealPreviewText(meal))}</span>
         </span>
         <span class="accordion-chevron" aria-hidden="true">${ICON_CHEVRON_RIGHT}</span>
       </button>
       <div class="accordion-body" id="body-${slot}" hidden>
         <div class="field">
           <label for="${slot}-zeit">Uhrzeit</label>
-          <input id="${slot}-zeit" type="time" value="${meal.zeit || ""}">
+          <input id="${slot}-zeit" type="time" value="${escapeHtml(meal.zeit || "")}">
         </div>
         <div class="field">
           <label for="${slot}-was">Was gegessen</label>
-          <textarea id="${slot}-was" rows="3">${meal.was || ""}</textarea>
+          <textarea id="${slot}-was" rows="3">${escapeHtml(meal.was || "")}</textarea>
         </div>
         <div class="field">
           <label for="${slot}-getraenk">Getränk</label>
-          <input id="${slot}-getraenk" type="text" value="${meal.getraenk || ""}">
+          <input id="${slot}-getraenk" type="text" value="${escapeHtml(meal.getraenk || "")}">
         </div>
         <div class="field">
           <label>Portionsgröße</label>
@@ -83,7 +88,7 @@ function activityRowHtml(index, activity) {
     <div class="field" data-activity-index="${index}" style="display:flex;gap:var(--space-2);align-items:flex-end;">
       <div style="flex:2;">
         <label for="activity-${index}-art">Art</label>
-        <input id="activity-${index}-art" type="text" value="${activity.art || ""}">
+        <input id="activity-${index}-art" type="text" value="${escapeHtml(activity.art || "")}">
       </div>
       <div style="flex:1;">
         <label for="activity-${index}-dauer">Dauer (Min)</label>
@@ -91,7 +96,7 @@ function activityRowHtml(index, activity) {
       </div>
       <div style="flex:1;">
         <label for="activity-${index}-zustand">Zustand</label>
-        <input id="activity-${index}-zustand" type="text" value="${activity.zustand || ""}">
+        <input id="activity-${index}-zustand" type="text" value="${escapeHtml(activity.zustand || "")}">
       </div>
       <button type="button" class="btn btn-secondary" data-remove-activity="${index}" aria-label="Aktivität entfernen" style="flex:0;">${ICON_TRASH}</button>
     </div>
@@ -150,11 +155,11 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       </div>
       <div class="field">
         <label for="alcohol-info">Art / Menge</label>
-        <input id="alcohol-info" type="text" value="${log.alcohol.info || ""}">
+        <input id="alcohol-info" type="text" value="${escapeHtml(log.alcohol.info || "")}">
       </div>
       <div class="field">
         <label for="supplements">Supplements</label>
-        <input id="supplements" type="text" value="${log.supplements || ""}">
+        <input id="supplements" type="text" value="${escapeHtml(log.supplements || "")}">
       </div>
     </div>
     <div class="section-card">
@@ -167,7 +172,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     <div class="section-card">
       <h3>${ICON_NOTE} Notizen</h3>
       <div class="field">
-        <textarea id="notes" rows="3">${log.notes || ""}</textarea>
+        <textarea id="notes" rows="3">${escapeHtml(log.notes || "")}</textarea>
       </div>
     </div>
   `;

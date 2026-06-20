@@ -1,8 +1,9 @@
 // Bildschirm: Profil auswählen oder neues Profil anlegen.
 import { getAllProfiles, createProfile } from "../profiles.js";
 import { ICON_PLUS } from "../icons.js";
+import { escapeHtml } from "../escapeHtml.js";
 
-const AVAILABLE_COLORS = ["#B3552C", "#D9A441", "#27543F", "#2C3E66"];
+const AVAILABLE_COLORS = ["#C1502E", "#D9A441", "#27543F", "#2C3E66"];
 
 export async function renderProfileSelect(container, onProfileSelected) {
   const profiles = await getAllProfiles();
@@ -33,8 +34,8 @@ export async function renderProfileSelect(container, onProfileSelected) {
     btn.style.justifyContent = "flex-start";
     btn.style.width = "100%";
     btn.innerHTML = `
-      <span style="width:32px;height:32px;border-radius:50%;background:${profile.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">${profile.icon}</span>
-      <span>${profile.name}</span>
+      <span style="width:32px;height:32px;border-radius:50%;background:${profile.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">${escapeHtml(profile.icon)}</span>
+      <span>${escapeHtml(profile.name)}</span>
     `;
     btn.addEventListener("click", () => onProfileSelected(profile));
     list.appendChild(btn);
