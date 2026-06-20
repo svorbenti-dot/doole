@@ -1,0 +1,166 @@
+/* Basis-Reset und Grundlayout für die App-Hülle (Header, Inhalt, Bottom-Nav) */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-headline);
+  margin: 0;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 75%, var(--color-accent) 75%, var(--color-accent) 100%);
+  color: #fff;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  flex-shrink: 0;
+}
+
+.app-content {
+  flex: 1;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-7) + var(--touch-min));
+  overflow-y: auto;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  background: #fff;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-2) 0;
+  padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+}
+
+.bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  justify-content: center;
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+}
+
+.bottom-nav .nav-item.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.bottom-nav .nav-item:disabled {
+  opacity: 0.5;
+}
+
+.section-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.section-card h3 {
+  font-size: var(--font-size-card-title);
+  color: var(--color-secondary);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.field {
+  margin-bottom: var(--space-3);
+}
+
+.field label {
+  display: block;
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  background: #fff;
+  color: var(--color-text);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  border: 1px solid var(--color-border);
+}
+
+#toast-root {
+  position: fixed;
+  bottom: calc(var(--touch-min) + var(--space-5));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.toast {
+  background: var(--color-secondary);
+  color: #fff;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-body);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.toast.toast-error {
+  background: var(--color-danger);
+}

@@ -1,0 +1,71 @@
+/* Design-Tokens: zentrale Variablen für Farben, Abstände, Schriftgrößen.
+   Andere CSS-Dateien greifen nur über diese Variablen auf Werte zu,
+   damit das Design an einer Stelle geändert werden kann. */
+:root {
+  /* Farben */
+  --color-bg: #F5EEDF;
+  --color-surface: #FBF6EA;
+  --color-primary: #B3552C;
+  --color-accent: #D9A441;
+  --color-secondary: #27543F;
+  --color-text: #262626;
+  --color-text-muted: #8a8473;
+  --color-border: #ECE2CC;
+  --color-danger: #B3261E;
+
+  /* Schriftarten */
+  --font-headline: "Fraunces", Georgia, serif;
+  --font-body: "Work Sans", -apple-system, sans-serif;
+
+  /* Schriftgrößen-Skala */
+  --font-size-label: 13px;
+  --font-size-body: 16px;
+  --font-size-card-title: 18px;
+  --font-size-section-title: 20px;
+  --font-size-display: 28px;
+
+  /* Abstands-Skala (4/8/12/16/24/32/48px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Sonstiges */
+  --radius-card: 14px;
+  --radius-pill: 999px;
+  --touch-min: 44px;
+}
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("../assets/fonts/fraunces-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("../assets/fonts/fraunces-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Work Sans";
+  src: url("../assets/fonts/work-sans-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Work Sans";
+  src: url("../assets/fonts/work-sans-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Work Sans";
+  src: url("../assets/fonts/work-sans-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
