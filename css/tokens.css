@@ -3,11 +3,11 @@
    damit das Design an einer Stelle geändert werden kann. */
 :root {
   /* Farben */
-  --color-bg: #F5EEDF;
+  --color-bg: #FAF6F0;
   --color-surface: #FBF6EA;
-  --color-primary: #B3552C;
+  --color-primary: #C1502E;
   --color-accent: #D9A441;
-  --color-secondary: #27543F;
+  --color-secondary: #2C5F4F;
   --color-text: #262626;
   --color-text-muted: #8a8473;
   --color-border: #ECE2CC;
@@ -34,9 +34,10 @@
   --space-7: 48px;
 
   /* Sonstiges */
-  --radius-card: 14px;
+  --radius-card: 16px;
   --radius-pill: 999px;
   --touch-min: 44px;
+  --shadow-card: 0 4px 14px rgba(44, 26, 12, 0.10);
 }
 
 @font-face {
