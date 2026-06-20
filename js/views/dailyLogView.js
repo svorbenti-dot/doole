@@ -114,24 +114,38 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       <div class="water-progress"><div class="water-progress-fill" id="water-progress-fill" style="width:${Math.min(100, ((log.waterMl || 0) / WATER_GOAL_ML) * 100)}%"></div></div>
     </div>
     <div class="section-card">
-      <h3>${ICON_SLEEP} Schlaf (Stunden)</h3>
+      <h3>${ICON_SLEEP} Schlaf</h3>
       <div class="field">
         <label for="sleep-hours">Stunden</label>
         <input id="sleep-hours" type="number" min="0" max="24" step="0.5" value="${log.sleep.stunden ?? ""}">
       </div>
       <div class="field">
-        <label for="sleep-quality">Schlafqualität (1-3)</label>
-        <input id="sleep-quality" type="number" min="1" max="3" value="${log.sleep.qualitaet ?? ""}">
+        <label>Schlafqualität</label>
+        <div class="emoji-picker">
+          ${SCHLAF_QUALITAET.map((opt) => `
+            <button type="button" class="emoji-btn emoji-btn-labeled ${log.sleep.qualitaet === opt.value ? "selected" : ""}" data-sleep-quality-value="${opt.value}" aria-label="Schlafqualität: ${opt.label}">
+              <span aria-hidden="true">${opt.emoji}</span>
+              <span class="emoji-btn-caption">${opt.label}</span>
+            </button>
+          `).join("")}
+        </div>
       </div>
+    </div>
+    <div class="section-card">
+      <h3>${ICON_WEIGHT} Gewicht</h3>
       <div class="field">
-        <label for="weight-kg">${ICON_WEIGHT} Gewicht (kg)</label>
+        <label for="weight-kg">Kilogramm</label>
         <input id="weight-kg" type="number" min="0" step="0.1" value="${log.weightKg ?? ""}">
       </div>
     </div>
     <div class="section-card">
       <h3>Alkohol &amp; Supplements</h3>
-      <div class="field" style="display:flex;align-items:center;gap:var(--space-2);">
-        <input id="alcohol-yes" type="checkbox" style="width:auto;min-height:auto;" ${log.alcohol.getrunken ? "checked" : ""}>
+      <div class="field" style="display:flex;align-items:center;gap:var(--space-3);">
+        <label class="toggle-switch">
+          <input type="checkbox" id="alcohol-yes" ${log.alcohol.getrunken ? "checked" : ""}>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
         <label for="alcohol-yes" style="margin:0;">Alkohol getrunken</label>
       </div>
       <div class="field">
@@ -252,7 +266,13 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     persist();
   });
   container.querySelector("#sleep-hours").addEventListener("change", (e) => { log.sleep.stunden = e.target.value ? Number(e.target.value) : null; persist(); });
-  container.querySelector("#sleep-quality").addEventListener("change", (e) => { log.sleep.qualitaet = e.target.value ? Number(e.target.value) : null; persist(); });
+  container.querySelectorAll("[data-sleep-quality-value]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      log.sleep.qualitaet = Number(btn.dataset.sleepQualityValue);
+      container.querySelectorAll("[data-sleep-quality-value]").forEach((b) => b.classList.toggle("selected", b === btn));
+      persist();
+    });
+  });
   container.querySelector("#weight-kg").addEventListener("change", (e) => { log.weightKg = e.target.value ? Number(e.target.value) : null; persist(); });
 
   container.querySelector("#alcohol-yes").addEventListener("change", (e) => { log.alcohol.getrunken = e.target.checked; persist(); });
