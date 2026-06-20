@@ -1,7 +1,7 @@
 // Bildschirm: Tagesprotokoll für ein Profil an einem bestimmten Tag.
 import { getDailyLog, saveDailyLog, MEAL_SLOT_LABELS } from "../dailyLog.js";
 import { renderDateNav } from "../calendar.js";
-import { ICON_MEAL, ICON_WATER, ICON_SLEEP, ICON_WEIGHT } from "../icons.js";
+import { ICON_MEAL, ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH } from "../icons.js";
 
 function mealCardHtml(slot, meal) {
   const label = MEAL_SLOT_LABELS[slot];
@@ -32,6 +32,26 @@ function mealCardHtml(slot, meal) {
   `;
 }
 
+function activityRowHtml(index, activity) {
+  return `
+    <div class="field" data-activity-index="${index}" style="display:flex;gap:var(--space-2);align-items:flex-end;">
+      <div style="flex:2;">
+        <label for="activity-${index}-art">Art</label>
+        <input id="activity-${index}-art" type="text" value="${activity.art || ""}">
+      </div>
+      <div style="flex:1;">
+        <label for="activity-${index}-dauer">Dauer (Min)</label>
+        <input id="activity-${index}-dauer" type="number" min="0" value="${activity.dauerMin ?? ""}">
+      </div>
+      <div style="flex:1;">
+        <label for="activity-${index}-zustand">Zustand</label>
+        <input id="activity-${index}-zustand" type="text" value="${activity.zustand || ""}">
+      </div>
+      <button type="button" class="btn btn-secondary" data-remove-activity="${index}" aria-label="Aktivität entfernen" style="flex:0;">${ICON_TRASH}</button>
+    </div>
+  `;
+}
+
 export async function renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange) {
   renderDateNav(headerContainer, dateISO, onDateChange);
   const log = await getDailyLog(profile.id, dateISO);
@@ -57,6 +77,34 @@ export async function renderDailyLogView(container, headerContainer, profile, da
         <input id="weight-kg" type="number" min="0" step="0.1" value="${log.weightKg ?? ""}">
       </div>
     </div>
+    <div class="section-card">
+      <h3>Alkohol &amp; Supplements</h3>
+      <div class="field" style="display:flex;align-items:center;gap:var(--space-2);">
+        <input id="alcohol-yes" type="checkbox" style="width:auto;min-height:auto;" ${log.alcohol.getrunken ? "checked" : ""}>
+        <label for="alcohol-yes" style="margin:0;">Alkohol getrunken</label>
+      </div>
+      <div class="field">
+        <label for="alcohol-info">Art / Menge</label>
+        <input id="alcohol-info" type="text" value="${log.alcohol.info || ""}">
+      </div>
+      <div class="field">
+        <label for="supplements">Supplements</label>
+        <input id="supplements" type="text" value="${log.supplements || ""}">
+      </div>
+    </div>
+    <div class="section-card">
+      <h3>${ICON_ACTIVITY} Aktivität</h3>
+      <div id="activity-list" style="display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-3);">
+        ${log.activities.map((activity, index) => activityRowHtml(index, activity)).join("")}
+      </div>
+      <button type="button" id="add-activity" class="btn btn-secondary">${ICON_PLUS} Aktivität hinzufügen</button>
+    </div>
+    <div class="section-card">
+      <h3>${ICON_NOTE} Notizen</h3>
+      <div class="field">
+        <textarea id="notes" rows="3">${log.notes || ""}</textarea>
+      </div>
+    </div>
   `;
 
   // Speichert das gesamte Log neu, sobald sich ein Feld ändert.
@@ -77,4 +125,29 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   container.querySelector("#sleep-hours").addEventListener("change", (e) => { log.sleep.stunden = e.target.value ? Number(e.target.value) : null; persist(); });
   container.querySelector("#sleep-quality").addEventListener("change", (e) => { log.sleep.qualitaet = e.target.value ? Number(e.target.value) : null; persist(); });
   container.querySelector("#weight-kg").addEventListener("change", (e) => { log.weightKg = e.target.value ? Number(e.target.value) : null; persist(); });
+
+  container.querySelector("#alcohol-yes").addEventListener("change", (e) => { log.alcohol.getrunken = e.target.checked; persist(); });
+  container.querySelector("#alcohol-info").addEventListener("change", (e) => { log.alcohol.info = e.target.value; persist(); });
+  container.querySelector("#supplements").addEventListener("change", (e) => { log.supplements = e.target.value; persist(); });
+  container.querySelector("#notes").addEventListener("change", (e) => { log.notes = e.target.value; persist(); });
+
+  function wireActivityRow(index) {
+    const row = container.querySelector(`[data-activity-index="${index}"]`);
+    row.querySelector(`#activity-${index}-art`).addEventListener("change", (e) => { log.activities[index].art = e.target.value; persist(); });
+    row.querySelector(`#activity-${index}-dauer`).addEventListener("change", (e) => { log.activities[index].dauerMin = e.target.value ? Number(e.target.value) : null; persist(); });
+    row.querySelector(`#activity-${index}-zustand`).addEventListener("change", (e) => { log.activities[index].zustand = e.target.value; persist(); });
+    row.querySelector(`[data-remove-activity="${index}"]`).addEventListener("click", () => {
+      log.activities.splice(index, 1);
+      persist();
+      renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+    });
+  }
+
+  log.activities.forEach((_, index) => wireActivityRow(index));
+
+  container.querySelector("#add-activity").addEventListener("click", () => {
+    log.activities.push({ art: "", dauerMin: null, zustand: "" });
+    persist();
+    renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+  });
 }
