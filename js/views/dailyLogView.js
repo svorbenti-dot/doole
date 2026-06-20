@@ -1,5 +1,6 @@
 // Bildschirm: Tagesprotokoll für ein Profil an einem bestimmten Tag.
 import { getDailyLog, saveDailyLog, MEAL_SLOT_LABELS } from "../dailyLog.js";
+import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
 import { ICON_MEAL, ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH } from "../icons.js";
 
@@ -109,7 +110,12 @@ export async function renderDailyLogView(container, headerContainer, profile, da
 
   // Speichert das gesamte Log neu, sobald sich ein Feld ändert.
   async function persist() {
-    await saveDailyLog(log);
+    try {
+      await saveDailyLog(log);
+      showToast("Gespeichert ✓");
+    } catch (err) {
+      // saveDailyLog hat bereits einen Fehler-Toast angezeigt.
+    }
   }
 
   Object.keys(log.meals).forEach((slot) => {
