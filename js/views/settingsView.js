@@ -40,6 +40,10 @@ export async function renderSettingsView(container, currentProfile, callbacks) {
       if (remaining.length === 0) {
         callbacks.onAllProfilesDeleted();
       } else {
+        // Wenn das aktive Profil gelöscht wurde, den App-State über das neue aktive Profil informieren
+        if (profile.id === currentProfile.id) {
+          callbacks.onActiveProfileChanged(remaining[0]);
+        }
         renderSettingsView(container, profile.id === currentProfile.id ? remaining[0] : currentProfile, callbacks);
       }
     });

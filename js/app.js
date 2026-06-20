@@ -54,6 +54,9 @@ function showSettings() {
       state.currentDateISO = todayISO();
       showDailyLog();
     },
+    onActiveProfileChanged: (profile) => {
+      state.currentProfile = profile;
+    },
     onAllProfilesDeleted: showProfileSelect,
   });
 }
