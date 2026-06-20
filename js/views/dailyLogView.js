@@ -104,14 +104,19 @@ export async function renderDailyLogView(container, headerContainer, profile, da
 
   container.innerHTML = `
     ${Object.entries(log.meals).map(([slot, meal]) => mealCardHtml(slot, meal)).join("")}
-    <div class="section-card">
-      <h3>${ICON_WATER} Wasser, Schlaf, Gewicht</h3>
-      <div class="field">
-        <label for="water-ml">Wasser (ml)</label>
-        <input id="water-ml" type="number" min="0" step="50" value="${log.waterMl ?? ""}">
+    <div class="section-card water-card">
+      <h3>${ICON_WATER} Wasser</h3>
+      <div class="water-row">
+        <button type="button" class="water-stepper-btn minus" id="water-minus" aria-label="200 Milliliter abziehen">−</button>
+        <div class="water-sum" id="water-sum">${log.waterMl || 0} / ${WATER_GOAL_ML} ml</div>
+        <button type="button" class="water-stepper-btn" id="water-plus" aria-label="200 Milliliter hinzufügen">${ICON_WATER}</button>
       </div>
+      <div class="water-progress"><div class="water-progress-fill" id="water-progress-fill" style="width:${Math.min(100, ((log.waterMl || 0) / WATER_GOAL_ML) * 100)}%"></div></div>
+    </div>
+    <div class="section-card">
+      <h3>${ICON_SLEEP} Schlaf (Stunden)</h3>
       <div class="field">
-        <label for="sleep-hours">${ICON_SLEEP} Schlaf (Stunden)</label>
+        <label for="sleep-hours">Stunden</label>
         <input id="sleep-hours" type="number" min="0" max="24" step="0.5" value="${log.sleep.stunden ?? ""}">
       </div>
       <div class="field">
@@ -230,7 +235,22 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
   });
 
-  container.querySelector("#water-ml").addEventListener("change", (e) => { log.waterMl = e.target.value ? Number(e.target.value) : null; persist(); });
+  function updateWaterDisplay() {
+    container.querySelector("#water-sum").textContent = `${log.waterMl || 0} / ${WATER_GOAL_ML} ml`;
+    container.querySelector("#water-progress-fill").style.width = `${Math.min(100, ((log.waterMl || 0) / WATER_GOAL_ML) * 100)}%`;
+  }
+
+  container.querySelector("#water-plus").addEventListener("click", () => {
+    log.waterMl = (log.waterMl || 0) + 200;
+    updateWaterDisplay();
+    persist();
+  });
+
+  container.querySelector("#water-minus").addEventListener("click", () => {
+    log.waterMl = Math.max(0, (log.waterMl || 0) - 200);
+    updateWaterDisplay();
+    persist();
+  });
   container.querySelector("#sleep-hours").addEventListener("change", (e) => { log.sleep.stunden = e.target.value ? Number(e.target.value) : null; persist(); });
   container.querySelector("#sleep-quality").addEventListener("change", (e) => { log.sleep.qualitaet = e.target.value ? Number(e.target.value) : null; persist(); });
   container.querySelector("#weight-kg").addEventListener("change", (e) => { log.weightKg = e.target.value ? Number(e.target.value) : null; persist(); });
