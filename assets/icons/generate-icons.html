@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Doole-Icon-Generator</title></head>
+<body style="font-family:sans-serif;padding:24px;">
+  <h1>Doole App-Icon-Generator</h1>
+  <p>Klicke die Buttons, um die drei benötigten PNG-Dateien herunterzuladen. Speichere sie anschließend in <code>assets/icons/</code> mit genau diesen Namen: <code>icon-192.png</code>, <code>icon-512.png</code>, <code>icon-maskable-512.png</code>.</p>
+  <canvas id="canvas" width="512" height="512" style="border:1px solid #ccc;width:256px;height:256px;"></canvas>
+  <div>
+    <button onclick="download(192, false, 'icon-192.png')">icon-192.png herunterladen</button>
+    <button onclick="download(512, false, 'icon-512.png')">icon-512.png herunterladen</button>
+    <button onclick="download(512, true, 'icon-maskable-512.png')">icon-maskable-512.png herunterladen</button>
+  </div>
+  <script>
+    function draw(size, maskable) {
+      const canvas = document.getElementById("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+
+      // Maskable Icons brauchen Rand-Sicherheitszone (sicherer Bereich = mittlere 80%)
+      const bgPadding = maskable ? size * 0.1 : 0;
+
+      ctx.fillStyle = "#F5EEDF";
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.fillStyle = "#B3552C";
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, (size - bgPadding * 2) / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#D9A441";
+      ctx.font = `bold ${size * 0.45}px Georgia, serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("D", size / 2, size / 2 + size * 0.02);
+    }
+
+    function download(size, maskable, filename) {
+      draw(size, maskable);
+      const canvas = document.getElementById("canvas");
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    draw(512, false);
+  </script>
+</body>
+</html>
