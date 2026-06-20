@@ -1,6 +1,8 @@
 // Einstiegspunkt der App: verwaltet den aktuellen Zustand (Profil, Datum)
 // und schaltet zwischen den Bildschirmen (Views) um.
 import { renderProfileSelect } from "./views/profileSelect.js";
+import { renderDailyLogView } from "./views/dailyLogView.js";
+import { todayISO } from "./calendar.js";
 
 const state = {
   currentProfile: null,
@@ -15,7 +17,15 @@ export function showProfileSelect() {
   headerEl.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Doole</h1>`;
   renderProfileSelect(contentEl, (profile) => {
     state.currentProfile = profile;
-    contentEl.innerHTML = `<p>Profil ausgewählt: ${profile.name}</p>`;
+    state.currentDateISO = todayISO();
+    showDailyLog();
+  });
+}
+
+function showDailyLog() {
+  renderDailyLogView(contentEl, headerEl, state.currentProfile, state.currentDateISO, (newDateISO) => {
+    state.currentDateISO = newDateISO;
+    showDailyLog();
   });
 }
 
