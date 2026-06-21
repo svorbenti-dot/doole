@@ -5,7 +5,7 @@ import { showToast } from "./toast.js";
 const MEAL_SLOTS = ["fruehstueck", "snack1", "mittag", "snack2", "abendbrot"];
 
 function emptyMeal() {
-  return { zeit: "", was: "", getraenk: "", portion: "", saettigung: null, gefuehlVorher: null, gefuehlNachher: null };
+  return { zeit: "", was: "", getraenk: "", portion: "", saettigung: null, gefuehlVorher: null, gefuehlNachher: null, kalorien: null };
 }
 
 export function createEmptyDailyLog(profileId, dateISO) {

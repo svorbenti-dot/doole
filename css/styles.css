@@ -587,3 +587,11 @@ h1, h2, h3 {
   margin-top: 2px;
   color: var(--color-secondary);
 }
+
+/* Kalorien-Tagessumme */
+.kcal-total-value {
+  font-family: var(--font-headline);
+  font-size: var(--font-size-section-title);
+  color: var(--color-secondary);
+  margin: 0;
+}

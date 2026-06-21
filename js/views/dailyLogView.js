@@ -63,6 +63,10 @@ function mealCardHtml(slot, meal) {
           <input id="${slot}-getraenk" type="text" value="${escapeHtml(meal.getraenk || "")}">
         </div>
         <div class="field">
+          <label for="${slot}-kalorien">Kalorien (optional)</label>
+          <input id="${slot}-kalorien" type="number" min="0" inputmode="numeric" value="${meal.kalorien ?? ""}">
+        </div>
+        <div class="field">
           <label>Portionsgröße</label>
           <div class="chip-group">${chipGroupHtml("portion", PORTION_OPTIONS, meal.portion)}</div>
         </div>
@@ -110,6 +114,11 @@ function dailySummaryHtml(log) {
   `;
 }
 
+function kcalTotalHtml(log) {
+  const total = Object.values(log.meals).reduce((sum, meal) => sum + (meal.kalorien || 0), 0);
+  return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
+}
+
 function activityRowHtml(index, activity) {
   return `
     <div class="field" data-activity-index="${index}" style="display:flex;gap:var(--space-2);align-items:flex-end;">
@@ -140,6 +149,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       <div id="daily-summary">${dailySummaryHtml(log)}</div>
     </div>
     ${Object.entries(log.meals).map(([slot, meal]) => mealCardHtml(slot, meal)).join("")}
+    <div class="section-card" id="kcal-total-card">${kcalTotalHtml(log)}</div>
     <div class="section-card water-card">
       <h3>${ICON_WATER} Wasser</h3>
       <div class="water-row">
@@ -213,8 +223,13 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     container.querySelector("#daily-summary").innerHTML = dailySummaryHtml(log);
   }
 
+  function updateMealKcalTotal() {
+    container.querySelector("#kcal-total-card").innerHTML = kcalTotalHtml(log);
+  }
+
   async function persist() {
     updateDailySummary();
+    updateMealKcalTotal();
     try {
       await saveDailyLog(log);
       showToast("Gespeichert ✓");
@@ -256,6 +271,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     card.querySelector(`#${slot}-zeit`).addEventListener("change", (e) => { log.meals[slot].zeit = e.target.value; persist(); });
     card.querySelector(`#${slot}-was`).addEventListener("change", (e) => { log.meals[slot].was = e.target.value; persist(); });
     card.querySelector(`#${slot}-getraenk`).addEventListener("change", (e) => { log.meals[slot].getraenk = e.target.value; persist(); });
+    card.querySelector(`#${slot}-kalorien`).addEventListener("change", (e) => { log.meals[slot].kalorien = e.target.value ? Number(e.target.value) : null; persist(); });
 
     card.querySelectorAll(`[data-chip-group="portion"]`).forEach((btn) => {
       btn.addEventListener("click", () => {
