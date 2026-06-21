@@ -3,6 +3,7 @@
 import { renderProfileSelect } from "./views/profileSelect.js";
 import { renderDailyLogView } from "./views/dailyLogView.js";
 import { renderCalendarView } from "./views/calendarView.js";
+import { renderOverviewView } from "./views/overviewView.js";
 import { renderSettingsView } from "./views/settingsView.js";
 import { todayISO } from "./calendar.js";
 import { ICON_HOME, ICON_CALENDAR, ICON_CHART, ICON_PROFILE } from "./icons.js";
@@ -20,11 +21,12 @@ function renderBottomNav(activeTab) {
   bottomNavEl.innerHTML = `
     <button class="nav-item ${activeTab === "home" ? "active" : ""}" id="nav-home" aria-label="Heute">${ICON_HOME}<span>Heute</span></button>
     <button class="nav-item ${activeTab === "calendar" ? "active" : ""}" id="nav-calendar" aria-label="Kalender">${ICON_CALENDAR}<span>Kalender</span></button>
-    <button class="nav-item" id="nav-chart" disabled aria-label="Übersicht (bald verfügbar)">${ICON_CHART}<span>Übersicht</span></button>
+    <button class="nav-item ${activeTab === "chart" ? "active" : ""}" id="nav-chart" aria-label="Übersicht">${ICON_CHART}<span>Übersicht</span></button>
     <button class="nav-item ${activeTab === "settings" ? "active" : ""}" id="nav-settings" aria-label="Profil/Einstellungen">${ICON_PROFILE}<span>Profil</span></button>
   `;
   bottomNavEl.querySelector("#nav-home").addEventListener("click", showDailyLog);
   bottomNavEl.querySelector("#nav-calendar").addEventListener("click", showCalendar);
+  bottomNavEl.querySelector("#nav-chart").addEventListener("click", showOverview);
   bottomNavEl.querySelector("#nav-settings").addEventListener("click", showSettings);
 }
 
@@ -53,6 +55,11 @@ function showCalendar() {
     state.currentDateISO = newDateISO;
     showDailyLog();
   });
+}
+
+function showOverview() {
+  renderBottomNav("chart");
+  renderOverviewView(contentEl, headerEl, state.currentProfile);
 }
 
 function showSettings() {

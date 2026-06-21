@@ -502,3 +502,63 @@ h1, h2, h3 {
 .calendar-cell.today .calendar-cell-dot {
   background: #fff;
 }
+
+/* Übersicht-Ansicht */
+.overview-subtext {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  margin: 0;
+}
+
+.overview-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.overview-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.overview-stat-icon {
+  color: var(--color-primary);
+}
+
+.overview-stat-value {
+  font-family: var(--font-headline);
+  font-size: var(--font-size-card-title);
+  color: var(--color-secondary);
+}
+
+.overview-stat-label {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+
+.chart-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.line-chart {
+  width: 100%;
+  height: auto;
+}
+
+.chart-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+
+.chart-empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+  margin: 0;
+}
