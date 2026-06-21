@@ -1,7 +1,7 @@
 // Bildschirm: Tagesprotokoll für ein Profil an einem bestimmten Tag.
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
-  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML,
+  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
@@ -121,20 +121,22 @@ function kcalTotalHtml(log) {
 
 function activityRowHtml(index, activity) {
   return `
-    <div class="field" data-activity-index="${index}" style="display:flex;gap:var(--space-2);align-items:flex-end;">
-      <div style="flex:2;">
-        <label for="activity-${index}-art">Art</label>
-        <input id="activity-${index}-art" type="text" value="${escapeHtml(activity.art || "")}">
+    <div class="field" data-activity-index="${index}">
+      <div style="display:flex;gap:var(--space-2);align-items:flex-end;">
+        <div style="flex:2;">
+          <label for="activity-${index}-art">Art</label>
+          <input id="activity-${index}-art" type="text" value="${escapeHtml(activity.art || "")}">
+        </div>
+        <div style="flex:1;">
+          <label for="activity-${index}-dauer">Dauer (Min)</label>
+          <input id="activity-${index}-dauer" type="number" min="0" value="${activity.dauerMin ?? ""}">
+        </div>
+        <button type="button" class="btn btn-secondary" data-remove-activity="${index}" aria-label="Aktivität entfernen" style="flex:0;">${ICON_TRASH}</button>
       </div>
-      <div style="flex:1;">
-        <label for="activity-${index}-dauer">Dauer (Min)</label>
-        <input id="activity-${index}-dauer" type="number" min="0" value="${activity.dauerMin ?? ""}">
+      <div style="margin-top:var(--space-2);">
+        <label>Zustand</label>
+        <div class="emoji-picker">${emojiPickerHtml(`zustand-${index}`, AKTIVITAET_ZUSTAND, activity.zustand)}</div>
       </div>
-      <div style="flex:1;">
-        <label for="activity-${index}-zustand">Zustand</label>
-        <input id="activity-${index}-zustand" type="text" value="${escapeHtml(activity.zustand || "")}">
-      </div>
-      <button type="button" class="btn btn-secondary" data-remove-activity="${index}" aria-label="Aktivität entfernen" style="flex:0;">${ICON_TRASH}</button>
     </div>
   `;
 }
@@ -341,7 +343,13 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     const row = container.querySelector(`[data-activity-index="${index}"]`);
     row.querySelector(`#activity-${index}-art`).addEventListener("change", (e) => { log.activities[index].art = e.target.value; persist(); });
     row.querySelector(`#activity-${index}-dauer`).addEventListener("change", (e) => { log.activities[index].dauerMin = e.target.value ? Number(e.target.value) : null; persist(); });
-    row.querySelector(`#activity-${index}-zustand`).addEventListener("change", (e) => { log.activities[index].zustand = e.target.value; persist(); });
+    row.querySelectorAll(`[data-emoji-group="zustand-${index}"]`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        log.activities[index].zustand = btn.dataset.emojiValue;
+        row.querySelectorAll(`[data-emoji-group="zustand-${index}"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+        persist();
+      });
+    });
     row.querySelector(`[data-remove-activity="${index}"]`).addEventListener("click", () => {
       log.activities.splice(index, 1);
       persist();

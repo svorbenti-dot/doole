@@ -93,3 +93,10 @@ export const SCHLAF_QUALITAET = [
 ];
 
 export const WATER_GOAL_ML = 4000;
+
+export const AKTIVITAET_ZUSTAND = [
+  { value: "schlecht", emoji: "😫", label: "Schlecht" },
+  { value: "okay", emoji: "😐", label: "Okay" },
+  { value: "gut", emoji: "💪", label: "Gut" },
+  { value: "super", emoji: "🔥", label: "Super" },
+];
