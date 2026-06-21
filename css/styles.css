@@ -427,3 +427,78 @@ h1, h2, h3 {
 .toggle-switch input:checked ~ .toggle-thumb {
   transform: translateX(20px);
 }
+
+/* Kalender-Ansicht */
+.calendar-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-headline);
+  color: var(--color-secondary);
+}
+
+.calendar-header button {
+  background: none;
+  border: none;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+
+.calendar-cell {
+  position: relative;
+  min-height: var(--touch-min);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  border-radius: var(--space-2);
+  background: none;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.calendar-cell.empty {
+  cursor: default;
+}
+
+.calendar-cell.today {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.calendar-cell-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.calendar-cell.today .calendar-cell-dot {
+  background: #fff;
+}

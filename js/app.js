@@ -2,6 +2,7 @@
 // und schaltet zwischen den Bildschirmen (Views) um.
 import { renderProfileSelect } from "./views/profileSelect.js";
 import { renderDailyLogView } from "./views/dailyLogView.js";
+import { renderCalendarView } from "./views/calendarView.js";
 import { renderSettingsView } from "./views/settingsView.js";
 import { todayISO } from "./calendar.js";
 import { ICON_HOME, ICON_CALENDAR, ICON_CHART, ICON_PROFILE } from "./icons.js";
@@ -18,11 +19,12 @@ const bottomNavEl = document.getElementById("app-bottom-nav");
 function renderBottomNav(activeTab) {
   bottomNavEl.innerHTML = `
     <button class="nav-item ${activeTab === "home" ? "active" : ""}" id="nav-home" aria-label="Heute">${ICON_HOME}<span>Heute</span></button>
-    <button class="nav-item" id="nav-calendar" disabled aria-label="Kalender (bald verfügbar)">${ICON_CALENDAR}<span>Kalender</span></button>
+    <button class="nav-item ${activeTab === "calendar" ? "active" : ""}" id="nav-calendar" aria-label="Kalender">${ICON_CALENDAR}<span>Kalender</span></button>
     <button class="nav-item" id="nav-chart" disabled aria-label="Übersicht (bald verfügbar)">${ICON_CHART}<span>Übersicht</span></button>
     <button class="nav-item ${activeTab === "settings" ? "active" : ""}" id="nav-settings" aria-label="Profil/Einstellungen">${ICON_PROFILE}<span>Profil</span></button>
   `;
   bottomNavEl.querySelector("#nav-home").addEventListener("click", showDailyLog);
+  bottomNavEl.querySelector("#nav-calendar").addEventListener("click", showCalendar);
   bottomNavEl.querySelector("#nav-settings").addEventListener("click", showSettings);
 }
 
@@ -40,6 +42,14 @@ export function showProfileSelect() {
 function showDailyLog() {
   renderBottomNav("home");
   renderDailyLogView(contentEl, headerEl, state.currentProfile, state.currentDateISO, (newDateISO) => {
+    state.currentDateISO = newDateISO;
+    showDailyLog();
+  });
+}
+
+function showCalendar() {
+  renderBottomNav("calendar");
+  renderCalendarView(contentEl, headerEl, state.currentProfile, state.currentDateISO, (newDateISO) => {
     state.currentDateISO = newDateISO;
     showDailyLog();
   });
