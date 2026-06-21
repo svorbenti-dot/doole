@@ -83,6 +83,33 @@ function mealCardHtml(slot, meal) {
   `;
 }
 
+function dailySummaryHtml(log) {
+  const eatenMeals = Object.entries(log.meals).filter(([, meal]) => meal.was);
+  const mealsHtml = eatenMeals.length
+    ? eatenMeals.map(([slot, meal]) => `<li>${MEAL_SLOT_EMOJIS[slot]} <strong>${escapeHtml(MEAL_SLOT_LABELS[slot])}:</strong> ${escapeHtml(meal.was)}</li>`).join("")
+    : `<li>Noch keine Mahlzeit eingetragen.</li>`;
+
+  const activityCount = log.activities.length;
+  const activityMinutes = log.activities.reduce((sum, a) => sum + (a.dauerMin || 0), 0);
+  const activityLine = activityCount > 0
+    ? `<li>${ICON_ACTIVITY} <strong>Aktivität:</strong> ${activityCount} Eintrag/Einträge, ${activityMinutes} Min</li>`
+    : `<li>${ICON_ACTIVITY} <strong>Aktivität:</strong> Keine Aktivität eingetragen.</li>`;
+
+  const sleepQualityOpt = SCHLAF_QUALITAET.find((o) => o.value === log.sleep.qualitaet);
+
+  return `
+    <ul class="daily-summary-list">
+      ${mealsHtml}
+      <li>${ICON_WATER} <strong>Wasser:</strong> ${log.waterMl || 0} / ${WATER_GOAL_ML} ml</li>
+      <li>${ICON_SLEEP} <strong>Schlaf:</strong> ${log.sleep.stunden != null ? `${log.sleep.stunden} Std` : "Keine Angabe"}${sleepQualityOpt ? `, ${sleepQualityOpt.emoji} ${escapeHtml(sleepQualityOpt.label)}` : ""}</li>
+      <li>${ICON_WEIGHT} <strong>Gewicht:</strong> ${log.weightKg != null ? `${log.weightKg} kg` : "Keine Angabe"}</li>
+      ${activityLine}
+      <li><strong>Alkohol:</strong> ${log.alcohol.getrunken ? `Ja${log.alcohol.info ? ` (${escapeHtml(log.alcohol.info)})` : ""}` : "Nein"}</li>
+      <li>${ICON_NOTE} <strong>Notizen:</strong> ${log.notes ? escapeHtml(log.notes) : "–"}</li>
+    </ul>
+  `;
+}
+
 function activityRowHtml(index, activity) {
   return `
     <div class="field" data-activity-index="${index}" style="display:flex;gap:var(--space-2);align-items:flex-end;">
@@ -108,6 +135,10 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   const log = await getDailyLog(profile.id, dateISO);
 
   container.innerHTML = `
+    <div class="section-card">
+      <h3>Tagesbericht</h3>
+      <div id="daily-summary">${dailySummaryHtml(log)}</div>
+    </div>
     ${Object.entries(log.meals).map(([slot, meal]) => mealCardHtml(slot, meal)).join("")}
     <div class="section-card water-card">
       <h3>${ICON_WATER} Wasser</h3>
@@ -178,7 +209,12 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   `;
 
   // Speichert das gesamte Log neu, sobald sich ein Feld ändert.
+  function updateDailySummary() {
+    container.querySelector("#daily-summary").innerHTML = dailySummaryHtml(log);
+  }
+
   async function persist() {
+    updateDailySummary();
     try {
       await saveDailyLog(log);
       showToast("Gespeichert ✓");
