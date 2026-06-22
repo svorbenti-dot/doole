@@ -1,5 +1,5 @@
 // Fachlogik für Tagesprotokolle. Ein Eintrag pro Profil und Tag.
-import { getItem, putItem } from "./db.js";
+import { getItem, putItem, getAllItems } from "./db.js";
 import { showToast } from "./toast.js";
 
 const MEAL_SLOTS = ["fruehstueck", "snack1", "mittag", "snack2", "abendbrot"];
@@ -23,16 +23,25 @@ export function createEmptyDailyLog(profileId, dateISO) {
     sleep: { stunden: null, qualitaet: null },
     weightKg: null,
     alcohol: { getrunken: false, info: "" },
-    supplements: "",
+    supplements: [],
     activities: [],
     notes: "",
   };
 }
 
+function migrateSupplements(log) {
+  if (typeof log.supplements === "string") {
+    log.supplements = log.supplements.trim()
+      ? [{ name: log.supplements, feeling: null }]
+      : [];
+  }
+  return log;
+}
+
 export async function getDailyLog(profileId, dateISO) {
   try {
     const existing = await getItem("dailyLogs", `${profileId}_${dateISO}`);
-    return existing || createEmptyDailyLog(profileId, dateISO);
+    return existing ? migrateSupplements(existing) : createEmptyDailyLog(profileId, dateISO);
   } catch (err) {
     showToast("Tagesprotokoll konnte nicht geladen werden.", "error");
     return createEmptyDailyLog(profileId, dateISO);
@@ -100,3 +109,19 @@ export const AKTIVITAET_ZUSTAND = [
   { value: "gut", emoji: "💪", label: "Gut" },
   { value: "super", emoji: "🔥", label: "Super" },
 ];
+
+export const SUPPLEMENT_GEFUEHL = [
+  { value: "neutral", emoji: "😐", label: "Neutral" },
+  { value: "besser", emoji: "🙂", label: "Besser" },
+  { value: "viel_besser", emoji: "💪", label: "Viel besser" },
+  { value: "muede", emoji: "😴", label: "Müde" },
+  { value: "schlecht", emoji: "🤢", label: "Schlecht" },
+];
+
+export async function getLatestWeightEntry(profileId) {
+  const allLogs = await getAllItems("dailyLogs");
+  const withWeight = allLogs
+    .filter((log) => log.profileId === profileId && log.weightKg != null)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  return withWeight.length ? { date: withWeight[0].date, weightKg: withWeight[0].weightKg } : null;
+}
