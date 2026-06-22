@@ -1,5 +1,6 @@
 // Bildschirm: Profil auswählen oder neues Profil anlegen.
 import { getAllProfiles, createProfile } from "../profiles.js";
+import { GENDER_OPTIONS, ACTIVITY_LEVELS } from "../calorieCalc.js";
 import { ICON_PLUS } from "../icons.js";
 import { escapeHtml } from "../escapeHtml.js";
 
@@ -21,6 +22,26 @@ export async function renderProfileSelect(container, onProfileSelected) {
         <div class="field">
           <label>Farbe</label>
           <div id="color-picker" style="display:flex;gap:var(--space-2);"></div>
+        </div>
+        <div class="field">
+          <label for="new-profile-age">Alter (Jahre)</label>
+          <input id="new-profile-age" type="number" min="0" max="120">
+        </div>
+        <div class="field">
+          <label for="new-profile-height">Größe (cm)</label>
+          <input id="new-profile-height" type="number" min="0" max="250">
+        </div>
+        <div class="field">
+          <label for="new-profile-weight">Gewicht (kg)</label>
+          <input id="new-profile-weight" type="number" min="0" max="300" step="0.1">
+        </div>
+        <div class="field">
+          <label>Geschlecht</label>
+          <div class="chip-group" id="new-profile-gender">${GENDER_OPTIONS.map((opt) => `<button type="button" class="chip" data-chip-value="${opt.value}">${opt.label}</button>`).join("")}</div>
+        </div>
+        <div class="field">
+          <label>Aktivitätslevel</label>
+          <div class="chip-group" id="new-profile-activity">${ACTIVITY_LEVELS.map((opt) => `<button type="button" class="chip" data-chip-value="${opt.value}">${opt.label}</button>`).join("")}</div>
         </div>
         <button type="submit" class="btn btn-primary">${ICON_PLUS} Profil anlegen</button>
       </form>
@@ -59,12 +80,38 @@ export async function renderProfileSelect(container, onProfileSelected) {
     colorPicker.appendChild(swatch);
   });
 
+  let selectedGender = null;
+  container.querySelector("#new-profile-gender").querySelectorAll("[data-chip-value]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedGender = btn.dataset.chipValue;
+      container.querySelector("#new-profile-gender").querySelectorAll("[data-chip-value]").forEach((b) => b.classList.toggle("selected", b === btn));
+    });
+  });
+
+  let selectedActivityLevel = null;
+  container.querySelector("#new-profile-activity").querySelectorAll("[data-chip-value]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedActivityLevel = btn.dataset.chipValue;
+      container.querySelector("#new-profile-activity").querySelectorAll("[data-chip-value]").forEach((b) => b.classList.toggle("selected", b === btn));
+    });
+  });
+
   container.querySelector("#new-profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = container.querySelector("#new-profile-name").value.trim();
     if (!name) return;
     const icon = name.charAt(0).toUpperCase();
-    const created = await createProfile({ name, color: selectedColor, icon });
+    const ageValue = container.querySelector("#new-profile-age").value;
+    const heightValue = container.querySelector("#new-profile-height").value;
+    const weightValue = container.querySelector("#new-profile-weight").value;
+    const created = await createProfile({
+      name, color: selectedColor, icon,
+      age: ageValue ? Number(ageValue) : null,
+      heightCm: heightValue ? Number(heightValue) : null,
+      weightKg: weightValue ? Number(weightValue) : null,
+      gender: selectedGender,
+      activityLevel: selectedActivityLevel,
+    });
     onProfileSelected(created);
   });
 }
