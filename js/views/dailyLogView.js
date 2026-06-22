@@ -114,9 +114,35 @@ function dailySummaryHtml(log) {
   `;
 }
 
-function kcalTotalHtml(log) {
+function kcalTotalHtml(log, profile) {
   const total = Object.values(log.meals).reduce((sum, meal) => sum + (meal.kalorien || 0), 0);
-  return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
+  const goal = profile.calorieGoal;
+
+  if (goal == null) {
+    return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
+  }
+
+  const diff = goal - total;
+  let statusEmoji;
+  let statusText;
+  if (diff > 0) {
+    statusEmoji = "😊";
+    statusText = `Defizit ${diff} kcal`;
+  } else if (diff === 0) {
+    statusEmoji = "😐";
+    statusText = "Ziel erreicht";
+  } else {
+    statusEmoji = "😟";
+    statusText = `${-diff} kcal über Ziel`;
+  }
+  const progressPct = goal > 0 ? Math.min(100, Math.round((total / goal) * 100)) : 0;
+
+  return `
+    <h3>Kalorien heute</h3>
+    <p class="kcal-total-value">Gegessen ${total} / Ziel ${goal} kcal</p>
+    <div class="water-progress"><div class="water-progress-fill" style="width:${progressPct}%"></div></div>
+    <p class="kcal-status">${statusEmoji} ${statusText}</p>
+  `;
 }
 
 function activityRowHtml(index, activity) {
@@ -151,7 +177,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       <div id="daily-summary">${dailySummaryHtml(log)}</div>
     </div>
     ${Object.entries(log.meals).map(([slot, meal]) => mealCardHtml(slot, meal)).join("")}
-    <div class="section-card" id="kcal-total-card">${kcalTotalHtml(log)}</div>
+    <div class="section-card" id="kcal-total-card">${kcalTotalHtml(log, profile)}</div>
     <div class="section-card water-card">
       <h3>${ICON_WATER} Wasser</h3>
       <div class="water-row">
@@ -226,7 +252,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   }
 
   function updateMealKcalTotal() {
-    container.querySelector("#kcal-total-card").innerHTML = kcalTotalHtml(log);
+    container.querySelector("#kcal-total-card").innerHTML = kcalTotalHtml(log, profile);
   }
 
   async function persist() {

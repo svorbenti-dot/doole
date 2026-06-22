@@ -593,5 +593,11 @@ h1, h2, h3 {
   font-family: var(--font-headline);
   font-size: var(--font-size-section-title);
   color: var(--color-secondary);
-  margin: 0;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.kcal-status {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin: var(--space-2) 0 0 0;
 }
