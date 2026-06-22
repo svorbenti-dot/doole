@@ -112,7 +112,7 @@ export const AKTIVITAET_ZUSTAND = [
 
 export const SUPPLEMENT_GEFUEHL = [
   { value: "neutral", emoji: "😐", label: "Neutral" },
-  { value: "besser", emoji: "🙂", label: "Besser" },
+  { value: "besser", emoji: "😊", label: "Besser" },
   { value: "viel_besser", emoji: "💪", label: "Viel besser" },
   { value: "muede", emoji: "😴", label: "Müde" },
   { value: "schlecht", emoji: "🤢", label: "Schlecht" },

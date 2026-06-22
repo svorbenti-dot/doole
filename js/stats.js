@@ -5,7 +5,7 @@ import { addDaysISO, todayISO } from "./calendar.js";
 
 const OVERVIEW_WINDOW_DAYS = 30;
 
-export async function getOverviewStats(profileId) {
+export async function getOverviewStats(profileId, calorieGoal) {
   const allLogs = await getAllItems("dailyLogs");
   const today = todayISO();
   const windowStart = addDaysISO(today, -(OVERVIEW_WINDOW_DAYS - 1));
@@ -33,6 +33,20 @@ export async function getOverviewStats(profileId) {
     .filter((entry) => entry !== null)
     .map((entry) => ({ label: formatShortDate(entry.date), value: entry.value }));
 
+  const kcalDays = logs
+    .map((l) => ({ date: l.date, kcal: dailyKcalTotal(l) }))
+    .filter((entry) => entry.kcal !== null);
+
+  const kcalPoints = kcalDays.map((entry) => ({ label: formatShortDate(entry.date), value: entry.kcal }));
+
+  const avgKcalPerDay = kcalDays.length
+    ? Math.round(kcalDays.reduce((a, b) => a + b.kcal, 0) / kcalDays.length)
+    : null;
+
+  const avgKcalDeficit = kcalDays.length && calorieGoal != null
+    ? Math.round(kcalDays.reduce((a, b) => a + (calorieGoal - b.kcal), 0) / kcalDays.length)
+    : null;
+
   return {
     windowDays: OVERVIEW_WINDOW_DAYS,
     avgWaterMl,
@@ -41,7 +55,18 @@ export async function getOverviewStats(profileId) {
     avgSleepQuality,
     weightPoints,
     moodPoints,
+    avgKcalPerDay,
+    avgKcalDeficit,
+    kcalPoints,
   };
+}
+
+function dailyKcalTotal(log) {
+  const kcalValues = Object.values(log.meals || {})
+    .map((meal) => meal.kalorien)
+    .filter((v) => v != null);
+  if (kcalValues.length === 0) return null;
+  return kcalValues.reduce((a, b) => a + b, 0);
 }
 
 function dailyMoodAverage(log) {

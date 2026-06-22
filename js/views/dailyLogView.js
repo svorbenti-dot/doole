@@ -1,7 +1,7 @@
 // Bildschirm: Tagesprotokoll für ein Profil an einem bestimmten Tag.
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
-  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND,
+  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
@@ -145,6 +145,24 @@ function kcalTotalHtml(log, profile) {
   `;
 }
 
+function supplementRowHtml(index, supplement) {
+  return `
+    <div class="field" data-supplement-index="${index}">
+      <div style="display:flex;gap:var(--space-2);align-items:flex-end;">
+        <div style="flex:1;">
+          <label for="supplement-${index}-name">Supplement</label>
+          <input id="supplement-${index}-name" type="text" value="${escapeHtml(supplement.name || "")}">
+        </div>
+        <button type="button" class="btn btn-secondary" data-remove-supplement="${index}" aria-label="Supplement entfernen" style="flex:0;">${ICON_TRASH}</button>
+      </div>
+      <div style="margin-top:var(--space-2);">
+        <label>Wirkung</label>
+        <div class="emoji-picker">${emojiPickerHtml(`supplement-feeling-${index}`, SUPPLEMENT_GEFUEHL, supplement.feeling)}</div>
+      </div>
+    </div>
+  `;
+}
+
 function activityRowHtml(index, activity) {
   return `
     <div class="field" data-activity-index="${index}">
@@ -227,8 +245,11 @@ export async function renderDailyLogView(container, headerContainer, profile, da
         <input id="alcohol-info" type="text" value="${escapeHtml(log.alcohol.info || "")}">
       </div>
       <div class="field">
-        <label for="supplements">Supplements</label>
-        <input id="supplements" type="text" value="${escapeHtml(log.supplements || "")}">
+        <label>Supplements</label>
+        <div id="supplement-list" style="display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-3);">
+          ${log.supplements.map((supplement, index) => supplementRowHtml(index, supplement)).join("")}
+        </div>
+        <button type="button" id="add-supplement" class="btn btn-secondary">${ICON_PLUS} Supplement hinzufügen</button>
       </div>
     </div>
     <div class="section-card">
@@ -362,8 +383,32 @@ export async function renderDailyLogView(container, headerContainer, profile, da
 
   container.querySelector("#alcohol-yes").addEventListener("change", (e) => { log.alcohol.getrunken = e.target.checked; persist(); });
   container.querySelector("#alcohol-info").addEventListener("change", (e) => { log.alcohol.info = e.target.value; persist(); });
-  container.querySelector("#supplements").addEventListener("change", (e) => { log.supplements = e.target.value; persist(); });
   container.querySelector("#notes").addEventListener("change", (e) => { log.notes = e.target.value; persist(); });
+
+  function wireSupplementRow(index) {
+    const row = container.querySelector(`[data-supplement-index="${index}"]`);
+    row.querySelector(`#supplement-${index}-name`).addEventListener("change", (e) => { log.supplements[index].name = e.target.value; persist(); });
+    row.querySelectorAll(`[data-emoji-group="supplement-feeling-${index}"]`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        log.supplements[index].feeling = btn.dataset.emojiValue;
+        row.querySelectorAll(`[data-emoji-group="supplement-feeling-${index}"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+        persist();
+      });
+    });
+    row.querySelector(`[data-remove-supplement="${index}"]`).addEventListener("click", () => {
+      log.supplements.splice(index, 1);
+      persist();
+      renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+    });
+  }
+
+  log.supplements.forEach((_, index) => wireSupplementRow(index));
+
+  container.querySelector("#add-supplement").addEventListener("click", () => {
+    log.supplements.push({ name: "", feeling: null });
+    persist();
+    renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+  });
 
   function wireActivityRow(index) {
     const row = container.querySelector(`[data-activity-index="${index}"]`);
