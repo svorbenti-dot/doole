@@ -1,7 +1,7 @@
 // Cache-first-Strategie für alle statischen Dateien, damit die App nach
 // dem ersten Aufruf komplett offline funktioniert. Nutzerdaten liegen
 // ohnehin in IndexedDB und werden hier nicht angefasst.
-const CACHE_NAME = "doole-cache-v7";
+const CACHE_NAME = "doole-cache-v14";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -20,11 +20,18 @@ const ASSETS_TO_CACHE = [
   "./js/escapeHtml.js",
   "./js/charts.js",
   "./js/stats.js",
+  "./js/workoutPlan.js",
+  "./js/sportSettings.js",
+  "./js/exerciseIcons.js",
+  "./js/beep.js",
+  "./js/format.js",
   "./js/views/profileSelect.js",
   "./js/views/dailyLogView.js",
   "./js/views/settingsView.js",
   "./js/views/calendarView.js",
   "./js/views/overviewView.js",
+  "./js/views/sportView.js",
+  "./js/views/workoutPlayerView.js",
   "./assets/fonts/fraunces-400.woff2",
   "./assets/fonts/fraunces-600.woff2",
   "./assets/fonts/work-sans-400.woff2",
@@ -37,15 +44,17 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
 });
 

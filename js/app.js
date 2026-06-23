@@ -5,8 +5,10 @@ import { renderDailyLogView } from "./views/dailyLogView.js";
 import { renderCalendarView } from "./views/calendarView.js";
 import { renderOverviewView } from "./views/overviewView.js";
 import { renderSettingsView } from "./views/settingsView.js";
+import { renderSportView } from "./views/sportView.js";
+import { stopActiveWorkoutSession } from "./views/workoutPlayerView.js";
 import { todayISO } from "./calendar.js";
-import { ICON_HOME, ICON_CALENDAR, ICON_CHART, ICON_PROFILE } from "./icons.js";
+import { ICON_HOME, ICON_CALENDAR, ICON_CHART, ICON_PROFILE, ICON_SPORT } from "./icons.js";
 
 const state = {
   currentProfile: null,
@@ -20,11 +22,13 @@ const bottomNavEl = document.getElementById("app-bottom-nav");
 function renderBottomNav(activeTab) {
   bottomNavEl.innerHTML = `
     <button class="nav-item ${activeTab === "home" ? "active" : ""}" id="nav-home" aria-label="Heute">${ICON_HOME}<span>Heute</span></button>
+    <button class="nav-item ${activeTab === "sport" ? "active" : ""}" id="nav-sport" aria-label="Sport">${ICON_SPORT}<span>Sport</span></button>
     <button class="nav-item ${activeTab === "calendar" ? "active" : ""}" id="nav-calendar" aria-label="Kalender">${ICON_CALENDAR}<span>Kalender</span></button>
     <button class="nav-item ${activeTab === "chart" ? "active" : ""}" id="nav-chart" aria-label="Übersicht">${ICON_CHART}<span>Übersicht</span></button>
     <button class="nav-item ${activeTab === "settings" ? "active" : ""}" id="nav-settings" aria-label="Profil/Einstellungen">${ICON_PROFILE}<span>Profil</span></button>
   `;
   bottomNavEl.querySelector("#nav-home").addEventListener("click", showDailyLog);
+  bottomNavEl.querySelector("#nav-sport").addEventListener("click", showSport);
   bottomNavEl.querySelector("#nav-calendar").addEventListener("click", showCalendar);
   bottomNavEl.querySelector("#nav-chart").addEventListener("click", showOverview);
   bottomNavEl.querySelector("#nav-settings").addEventListener("click", showSettings);
@@ -42,6 +46,7 @@ export function showProfileSelect() {
 }
 
 function showDailyLog() {
+  stopActiveWorkoutSession();
   renderBottomNav("home");
   renderDailyLogView(contentEl, headerEl, state.currentProfile, state.currentDateISO, (newDateISO) => {
     state.currentDateISO = newDateISO;
@@ -49,7 +54,13 @@ function showDailyLog() {
   });
 }
 
+function showSport() {
+  renderBottomNav("sport");
+  renderSportView(contentEl, headerEl, state.currentProfile);
+}
+
 function showCalendar() {
+  stopActiveWorkoutSession();
   renderBottomNav("calendar");
   renderCalendarView(contentEl, headerEl, state.currentProfile, state.currentDateISO, (newDateISO) => {
     state.currentDateISO = newDateISO;
@@ -58,11 +69,13 @@ function showCalendar() {
 }
 
 function showOverview() {
+  stopActiveWorkoutSession();
   renderBottomNav("chart");
   renderOverviewView(contentEl, headerEl, state.currentProfile);
 }
 
 function showSettings() {
+  stopActiveWorkoutSession();
   renderBottomNav("settings");
   headerEl.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Einstellungen</h1>`;
   renderSettingsView(contentEl, state.currentProfile, {

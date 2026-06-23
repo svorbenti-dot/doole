@@ -589,6 +589,12 @@ h1, h2, h3 {
 }
 
 /* Kalorien-Tagessumme */
+.kcal-total-section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
 .kcal-total-value {
   font-family: var(--font-headline);
   font-size: var(--font-size-section-title);
@@ -596,8 +602,187 @@ h1, h2, h3 {
   margin: 0 0 var(--space-2) 0;
 }
 
+.kcal-breakdown {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2) 0;
+}
+
 .kcal-status {
   font-size: var(--font-size-label);
   color: var(--color-text-muted);
   margin: var(--space-2) 0 0 0;
+}
+
+/* Sport-Ansicht */
+.sport-phase-card {
+  text-align: center;
+}
+
+.sport-day-counter {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  text-transform: uppercase;
+  margin: 0 0 var(--space-1) 0;
+}
+
+.sport-phase-card h3 {
+  justify-content: center;
+  margin-bottom: var(--space-1);
+}
+
+.sport-phase-detail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  margin: 0;
+}
+
+.sport-toggle-group {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.sport-toggle {
+  flex: 1;
+  min-height: var(--touch-min);
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  cursor: pointer;
+}
+
+.sport-toggle.selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.sport-day-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.sport-focus-label {
+  color: var(--color-secondary);
+  font-family: var(--font-headline);
+  font-size: var(--font-size-card-title);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.sport-exercise-card h3 {
+  margin-bottom: var(--space-1);
+}
+
+.sport-exercise-detail {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.sport-start-btn {
+  width: 100%;
+  font-size: var(--font-size-card-title);
+  padding: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.sport-rest-card p,
+.sport-placeholder-card p {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Workout-Player */
+.player-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+
+.player-total-timer {
+  font-family: var(--font-headline);
+  font-size: var(--font-size-section-title);
+  color: var(--color-secondary);
+}
+
+.player-progress {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  margin: 0;
+}
+
+.player-phase-label {
+  font-weight: 600;
+  font-size: var(--font-size-card-title);
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.player-phase-label.rest {
+  color: var(--color-accent);
+}
+
+.player-icon {
+  width: 140px;
+  height: 140px;
+  color: var(--color-secondary);
+  margin: var(--space-2) 0;
+}
+
+.player-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.player-exercise-name {
+  font-size: var(--font-size-display);
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.player-exercise-detail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+  margin: 0;
+}
+
+.player-phase-timer {
+  font-family: var(--font-headline);
+  font-size: 64px;
+  color: var(--color-primary);
+  margin: var(--space-2) 0;
+}
+
+.player-phase-timer.rest {
+  color: var(--color-accent);
+}
+
+.player-controls {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-3);
+}
+
+.player-controls .btn {
+  flex: 1;
+}
+
+.player-finished {
+  padding-top: var(--space-7);
+}
+
+.player-finished-emoji {
+  font-size: 64px;
 }

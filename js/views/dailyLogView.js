@@ -2,11 +2,17 @@
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
   PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL, MEDITATION_GEFUEHL, YOGA_GEFUEHL,
+  ACTIVITY_KCAL_PER_SESSION, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
 import { ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH, ICON_CHEVRON_RIGHT } from "../icons.js";
 import { escapeHtml } from "../escapeHtml.js";
+import { formatNumberDE } from "../format.js";
+
+function stepsKcalBurn(steps) {
+  return steps != null ? Math.round(steps * STEP_KCAL_PER_STEP) : 0;
+}
 
 // Liefert den Vorschautext für die Akkordeon-Überschrift. Enthält rohen
 // (nicht escapten) Nutzertext — sicher für `.textContent`-Zuweisung
@@ -117,6 +123,7 @@ function dailySummaryHtml(log) {
       <li>${ICON_WATER} <strong>Wasser:</strong> ${log.waterMl || 0} / ${WATER_GOAL_ML} ml</li>
       <li>${ICON_SLEEP} <strong>Schlaf:</strong> ${log.sleep.stunden != null ? `${log.sleep.stunden} Std` : "Keine Angabe"}${sleepQualityOpt ? `, ${sleepQualityOpt.emoji} ${escapeHtml(sleepQualityOpt.label)}` : ""}</li>
       <li>${ICON_WEIGHT} <strong>Gewicht:</strong> ${log.weightKg != null ? `${log.weightKg} kg` : "Keine Angabe"}</li>
+      <li>🚶 <strong>Schritte:</strong> ${log.steps != null ? `${formatNumberDE(log.steps)} Schritte (${stepsKcalBurn(log.steps)} kcal)` : "Keine Angabe"}</li>
       ${activityLine}
       <li><strong>Alkohol:</strong> ${log.alcohol.getrunken ? `Ja${log.alcohol.info ? ` (${escapeHtml(log.alcohol.info)})` : ""}` : "Nein"}</li>
       <li>🧘 <strong>Meditation:</strong> ${meditationLine}</li>
@@ -128,11 +135,24 @@ function dailySummaryHtml(log) {
 
 function kcalTotalHtml(log, profile) {
   const total = Object.values(log.meals).reduce((sum, meal) => sum + (meal.kalorien || 0), 0);
-  const goal = profile.calorieGoal;
+  const baseGoal = profile.calorieGoal;
 
-  if (goal == null) {
+  if (baseGoal == null) {
     return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
   }
+
+  const activityBurn = log.activities.length * ACTIVITY_KCAL_PER_SESSION;
+  const yogaBurn = log.yoga.gemacht ? YOGA_KCAL_BURN : 0;
+  const stepsBurn = stepsKcalBurn(log.steps);
+  const goal = baseGoal + activityBurn + yogaBurn + stepsBurn;
+
+  const breakdownParts = [`TDEE ${baseGoal}`];
+  if (activityBurn > 0) breakdownParts.push(`Sport +${activityBurn}`);
+  if (yogaBurn > 0) breakdownParts.push(`Yoga +${yogaBurn}`);
+  if (stepsBurn > 0) breakdownParts.push(`Schritte +${stepsBurn}`);
+  const breakdownHtml = activityBurn > 0 || yogaBurn > 0 || stepsBurn > 0
+    ? `<p class="kcal-breakdown">${breakdownParts.join(" + ")} = ${goal} kcal Tagesziel</p>`
+    : "";
 
   const diff = goal - total;
   let statusEmoji;
@@ -152,6 +172,7 @@ function kcalTotalHtml(log, profile) {
   return `
     <h3>Kalorien heute</h3>
     <p class="kcal-total-value">Gegessen ${total} / Ziel ${goal} kcal</p>
+    ${breakdownHtml}
     <div class="water-progress"><div class="water-progress-fill" style="width:${progressPct}%"></div></div>
     <p class="kcal-status">${statusEmoji} ${statusText}</p>
   `;
@@ -205,9 +226,9 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     <div class="section-card">
       <h3>Tagesbericht</h3>
       <div id="daily-summary">${dailySummaryHtml(log)}</div>
+      <div id="kcal-total-card" class="kcal-total-section">${kcalTotalHtml(log, profile)}</div>
     </div>
     ${Object.entries(log.meals).map(([slot, meal]) => mealCardHtml(slot, meal)).join("")}
-    <div class="section-card" id="kcal-total-card">${kcalTotalHtml(log, profile)}</div>
     <div class="section-card water-card">
       <h3>${ICON_WATER} Wasser</h3>
       <div class="water-row">
@@ -240,6 +261,13 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       <div class="field">
         <label for="weight-kg">Kilogramm</label>
         <input id="weight-kg" type="number" min="0" step="0.1" value="${log.weightKg ?? ""}">
+      </div>
+    </div>
+    <div class="section-card">
+      <h3>🚶 Schritte</h3>
+      <div class="field">
+        <label for="steps-input">Schritte heute</label>
+        <input id="steps-input" type="number" min="0" step="1" inputmode="numeric" value="${log.steps ?? ""}">
       </div>
     </div>
     <div class="section-card">
@@ -434,6 +462,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
   });
   container.querySelector("#weight-kg").addEventListener("change", (e) => { log.weightKg = e.target.value ? Number(e.target.value) : null; persist(); });
+  container.querySelector("#steps-input").addEventListener("change", (e) => { log.steps = e.target.value ? Number(e.target.value) : null; persist(); });
 
   container.querySelector("#alcohol-yes").addEventListener("change", (e) => { log.alcohol.getrunken = e.target.checked; persist(); });
   container.querySelector("#alcohol-info").addEventListener("change", (e) => { log.alcohol.info = e.target.value; persist(); });

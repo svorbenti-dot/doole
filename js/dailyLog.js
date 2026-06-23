@@ -22,6 +22,7 @@ export function createEmptyDailyLog(profileId, dateISO) {
     waterMl: null,
     sleep: { stunden: null, qualitaet: null },
     weightKg: null,
+    steps: null,
     alcohol: { getrunken: false, info: "" },
     supplements: [],
     activities: [],
@@ -54,10 +55,17 @@ function migrateYoga(log) {
   return log;
 }
 
+function migrateSteps(log) {
+  if (log.steps === undefined) {
+    log.steps = null;
+  }
+  return log;
+}
+
 export async function getDailyLog(profileId, dateISO) {
   try {
     const existing = await getItem("dailyLogs", `${profileId}_${dateISO}`);
-    return existing ? migrateYoga(migrateMeditation(migrateSupplements(existing))) : createEmptyDailyLog(profileId, dateISO);
+    return existing ? migrateSteps(migrateYoga(migrateMeditation(migrateSupplements(existing)))) : createEmptyDailyLog(profileId, dateISO);
   } catch (err) {
     showToast("Tagesprotokoll konnte nicht geladen werden.", "error");
     return createEmptyDailyLog(profileId, dateISO);
@@ -118,6 +126,13 @@ export const SCHLAF_QUALITAET = [
 ];
 
 export const WATER_GOAL_ML = 4000;
+
+// Geschätzter Kalorienverbrauch, der zum Tagesziel addiert wird: pro
+// geloggter Trainingseinheit (Sport-Tab-Session, ca. 20 Min) und pro
+// Yoga-Einheit am Tag. So darf man mehr essen, je mehr man trainiert.
+export const ACTIVITY_KCAL_PER_SESSION = 150;
+export const YOGA_KCAL_BURN = 80;
+export const STEP_KCAL_PER_STEP = 0.04;
 
 export const AKTIVITAET_ZUSTAND = [
   { value: "schlecht", emoji: "😫", label: "Schlecht" },

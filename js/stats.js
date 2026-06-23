@@ -4,6 +4,7 @@ import { getAllItems } from "./db.js";
 import { addDaysISO, todayISO } from "./calendar.js";
 
 const OVERVIEW_WINDOW_DAYS = 30;
+const WEEK_WINDOW_DAYS = 7;
 
 export async function getOverviewStats(profileId, calorieGoal) {
   const allLogs = await getAllItems("dailyLogs");
@@ -51,6 +52,19 @@ export async function getOverviewStats(profileId, calorieGoal) {
     ? Math.round(kcalDays.reduce((a, b) => a + (calorieGoal - b.kcal), 0) / kcalDays.length)
     : null;
 
+  const stepsValues = logs.filter((l) => l.steps != null).map((l) => l.steps);
+  const avgStepsPerDay = stepsValues.length
+    ? Math.round(stepsValues.reduce((a, b) => a + b, 0) / stepsValues.length)
+    : null;
+
+  const weekStart = addDaysISO(today, -(WEEK_WINDOW_DAYS - 1));
+  const weekStepsValues = logs
+    .filter((l) => l.date >= weekStart && l.steps != null)
+    .map((l) => l.steps);
+  const avgStepsLastWeek = weekStepsValues.length
+    ? Math.round(weekStepsValues.reduce((a, b) => a + b, 0) / weekStepsValues.length)
+    : null;
+
   return {
     windowDays: OVERVIEW_WINDOW_DAYS,
     avgWaterMl,
@@ -64,6 +78,8 @@ export async function getOverviewStats(profileId, calorieGoal) {
     avgKcalPerDay,
     avgKcalDeficit,
     kcalPoints,
+    avgStepsPerDay,
+    avgStepsLastWeek,
   };
 }
 

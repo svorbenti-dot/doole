@@ -29,3 +29,5 @@ export const ICON_CHEVRON_RIGHT = `<svg aria-hidden="true" width="24" height="24
 export const ICON_PLUS = `<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>`;
 
 export const ICON_TRASH = `<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>`;
+
+export const ICON_SPORT = `<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4"/><path d="M5 8v8"/><path d="M8 11v2"/><path d="M16 11v2"/><path d="M19 8v8"/><path d="M22 10v4"/><path d="M8 12h8"/></svg>`;

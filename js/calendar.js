@@ -4,7 +4,7 @@
 // damit es keine Zeitzonen-Verwirrung gibt.
 import { ICON_CHEVRON_LEFT, ICON_CHEVRON_RIGHT } from "./icons.js";
 
-const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+export const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
 function pad2(n) {
@@ -21,6 +21,15 @@ export function addDaysISO(dateISO, n) {
   const date = new Date(year, month - 1, day);
   date.setDate(date.getDate() + n);
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+// Anzahl Tage zwischen zwei ISO-Daten (endISO - startISO), z.B. für Tag-X-Zähler.
+export function daysBetweenISO(startISO, endISO) {
+  const [sy, sm, sd] = startISO.split("-").map(Number);
+  const [ey, em, ed] = endISO.split("-").map(Number);
+  const start = new Date(sy, sm - 1, sd);
+  const end = new Date(ey, em - 1, ed);
+  return Math.round((end - start) / 86400000);
 }
 
 export function formatDateDisplay(dateISO) {

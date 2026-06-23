@@ -4,6 +4,7 @@ import { renderLineChart } from "../charts.js";
 import { SCHLAF_QUALITAET } from "../dailyLog.js";
 import { ICON_WATER, ICON_ACTIVITY, ICON_SLEEP, ICON_MEAL } from "../icons.js";
 import { escapeHtml } from "../escapeHtml.js";
+import { formatNumberDE } from "../format.js";
 
 export async function renderOverviewView(container, headerContainer, profile) {
   headerContainer.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Übersicht</h1>`;
@@ -58,6 +59,18 @@ export async function renderOverviewView(container, headerContainer, profile) {
         <span class="overview-stat-icon" aria-hidden="true">🧘‍♀️</span>
         <span class="overview-stat-value">${stats.yogaDayCount}</span>
         <span class="overview-stat-label">Yoga-Tage</span>
+      </div>
+      <div class="overview-stat">
+        <span class="overview-stat-icon" aria-hidden="true">🚶</span>
+        <span class="overview-stat-value">${stats.avgStepsPerDay != null ? formatNumberDE(stats.avgStepsPerDay) : "–"}</span>
+        <span class="overview-stat-label">Ø Schritte/Tag</span>
+      </div>
+    </div>
+    <div class="section-card overview-stat-grid">
+      <div class="overview-stat">
+        <span class="overview-stat-icon" aria-hidden="true">🚶</span>
+        <span class="overview-stat-value">${stats.avgStepsLastWeek != null ? `Ø ${formatNumberDE(stats.avgStepsLastWeek)} Schritte/Tag` : "–"}</span>
+        <span class="overview-stat-label">Wochen-Durchschnitt</span>
       </div>
     </div>
     <div class="section-card">
