@@ -23,6 +23,7 @@ export function createEmptyDailyLog(profileId, dateISO) {
     sleep: { stunden: null, qualitaet: null },
     weightKg: null,
     steps: null,
+    tagesform: null,
     alcohol: { getrunken: false, info: "" },
     supplements: [],
     activities: [],
@@ -62,10 +63,17 @@ function migrateSteps(log) {
   return log;
 }
 
+function migrateTagesform(log) {
+  if (log.tagesform === undefined) {
+    log.tagesform = null;
+  }
+  return log;
+}
+
 export async function getDailyLog(profileId, dateISO) {
   try {
     const existing = await getItem("dailyLogs", `${profileId}_${dateISO}`);
-    return existing ? migrateSteps(migrateYoga(migrateMeditation(migrateSupplements(existing)))) : createEmptyDailyLog(profileId, dateISO);
+    return existing ? migrateTagesform(migrateSteps(migrateYoga(migrateMeditation(migrateSupplements(existing))))) : createEmptyDailyLog(profileId, dateISO);
   } catch (err) {
     showToast("Tagesprotokoll konnte nicht geladen werden.", "error");
     return createEmptyDailyLog(profileId, dateISO);
@@ -117,6 +125,14 @@ export const GEFUEHL_NACHHER = [
   { value: 3, emoji: "😐", label: "Neutral" },
   { value: 4, emoji: "🙂", label: "Zufrieden" },
   { value: 5, emoji: "😊", label: "Gut" },
+];
+
+export const TAGESFORM_OPTIONS = [
+  { value: 1, emoji: "😴", label: "Müde" },
+  { value: 2, emoji: "😐", label: "Okay" },
+  { value: 3, emoji: "🙂", label: "Gut" },
+  { value: 4, emoji: "💪", label: "Top" },
+  { value: 5, emoji: "🔥", label: "Energiegeladen" },
 ];
 
 export const SCHLAF_QUALITAET = [

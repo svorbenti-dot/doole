@@ -31,7 +31,7 @@ function splitExercise(entry) {
   return { name, detail };
 }
 
-export function renderWorkoutPlayer(container, headerContainer, { workout, profile, onExit }) {
+export function renderWorkoutPlayer(container, headerContainer, { workout, profile, modeLabel, onExit }) {
   stopActiveWorkoutSession();
 
   const exercises = workout.exercises;
@@ -55,7 +55,7 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
     if (!profile) return;
     const log = await getDailyLog(profile.id, todayISO());
     const minutes = Math.max(1, Math.round((TOTAL_SECONDS - totalSecondsLeft) / 60));
-    log.activities.push({ art: `${workout.focus} (Home Training)`, dauerMin: minutes, zustand: "gut" });
+    log.activities.push({ art: `${workout.focus} (${modeLabel})`, dauerMin: minutes, zustand: "gut" });
     await saveDailyLog(log);
   }
 

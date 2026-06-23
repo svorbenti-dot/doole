@@ -38,6 +38,10 @@ export async function getOverviewStats(profileId, calorieGoal) {
     .filter((entry) => entry !== null)
     .map((entry) => ({ label: formatShortDate(entry.date), value: entry.value }));
 
+  const tagesformPoints = logs
+    .filter((l) => l.tagesform != null)
+    .map((l) => ({ label: formatShortDate(l.date), value: l.tagesform }));
+
   const kcalDays = logs
     .map((l) => ({ date: l.date, kcal: dailyKcalTotal(l) }))
     .filter((entry) => entry.kcal !== null);
@@ -75,6 +79,7 @@ export async function getOverviewStats(profileId, calorieGoal) {
     avgSleepQuality,
     weightPoints,
     moodPoints,
+    tagesformPoints,
     avgKcalPerDay,
     avgKcalDeficit,
     kcalPoints,

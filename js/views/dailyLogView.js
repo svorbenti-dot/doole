@@ -2,16 +2,33 @@
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
   PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL, MEDITATION_GEFUEHL, YOGA_GEFUEHL,
-  ACTIVITY_KCAL_PER_SESSION, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP,
+  ACTIVITY_KCAL_PER_SESSION, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
-import { renderDateNav } from "../calendar.js";
+import { renderDateNav, todayISO } from "../calendar.js";
 import { ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLUS, ICON_TRASH, ICON_CHEVRON_RIGHT } from "../icons.js";
 import { escapeHtml } from "../escapeHtml.js";
 import { formatNumberDE } from "../format.js";
+import { computeAndSaveDeficitStreak } from "../streak.js";
 
 function stepsKcalBurn(steps) {
   return steps != null ? Math.round(steps * STEP_KCAL_PER_STEP) : 0;
+}
+
+function tagesformCardHtml(log) {
+  return `
+    <div class="section-card">
+      <h3>Wie startest du in den Tag?</h3>
+      <div class="emoji-picker">
+        ${TAGESFORM_OPTIONS.map((opt) => `
+          <button type="button" class="emoji-btn emoji-btn-labeled ${log.tagesform === opt.value ? "selected" : ""}" data-tagesform-value="${opt.value}" aria-label="Tagesform: ${opt.label}">
+            <span aria-hidden="true">${opt.emoji}</span>
+            <span class="emoji-btn-caption">${opt.label}</span>
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
 }
 
 // Liefert den Vorschautext für die Akkordeon-Überschrift. Enthält rohen
@@ -133,7 +150,7 @@ function dailySummaryHtml(log) {
   `;
 }
 
-function kcalTotalHtml(log, profile) {
+function kcalTotalHtml(log, profile, streak) {
   const total = Object.values(log.meals).reduce((sum, meal) => sum + (meal.kalorien || 0), 0);
   const baseGoal = profile.calorieGoal;
 
@@ -169,12 +186,17 @@ function kcalTotalHtml(log, profile) {
   }
   const progressPct = goal > 0 ? Math.min(100, Math.round((total / goal) * 100)) : 0;
 
+  const streakHtml = streak > 0
+    ? `<p class="kcal-streak">🔥 ${streak} ${streak === 1 ? "Tag" : "Tage"} in Folge im Defizit</p>`
+    : "";
+
   return `
     <h3>Kalorien heute</h3>
     <p class="kcal-total-value">Gegessen ${total} / Ziel ${goal} kcal</p>
     ${breakdownHtml}
     <div class="water-progress"><div class="water-progress-fill" style="width:${progressPct}%"></div></div>
     <p class="kcal-status">${statusEmoji} ${statusText}</p>
+    ${streakHtml}
   `;
 }
 
@@ -221,12 +243,15 @@ function activityRowHtml(index, activity) {
 export async function renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange) {
   renderDateNav(headerContainer, dateISO, onDateChange);
   const log = await getDailyLog(profile.id, dateISO);
+  // Der Streak bezieht sich immer auf "heute", nicht auf den gerade angezeigten Tag.
+  const streak = dateISO === todayISO() ? await computeAndSaveDeficitStreak(profile.id, profile.calorieGoal) : 0;
 
   container.innerHTML = `
+    ${tagesformCardHtml(log)}
     <div class="section-card">
       <h3>Tagesbericht</h3>
       <div id="daily-summary">${dailySummaryHtml(log)}</div>
-      <div id="kcal-total-card" class="kcal-total-section">${kcalTotalHtml(log, profile)}</div>
+      <div id="kcal-total-card" class="kcal-total-section">${kcalTotalHtml(log, profile, streak)}</div>
     </div>
     ${Object.entries(log.meals).map(([slot, meal]) => mealCardHtml(slot, meal)).join("")}
     <div class="section-card water-card">
@@ -355,7 +380,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   }
 
   function updateMealKcalTotal() {
-    container.querySelector("#kcal-total-card").innerHTML = kcalTotalHtml(log, profile);
+    container.querySelector("#kcal-total-card").innerHTML = kcalTotalHtml(log, profile, streak);
   }
 
   async function persist() {
@@ -452,6 +477,13 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     log.waterMl = Math.max(0, (log.waterMl || 0) - 200);
     updateWaterDisplay();
     persist();
+  });
+  container.querySelectorAll("[data-tagesform-value]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      log.tagesform = Number(btn.dataset.tagesformValue);
+      container.querySelectorAll("[data-tagesform-value]").forEach((b) => b.classList.toggle("selected", b === btn));
+      persist();
+    });
   });
   container.querySelector("#sleep-hours").addEventListener("change", (e) => { log.sleep.stunden = e.target.value ? Number(e.target.value) : null; persist(); });
   container.querySelectorAll("[data-sleep-quality-value]").forEach((btn) => {

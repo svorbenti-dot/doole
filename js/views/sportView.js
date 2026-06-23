@@ -1,5 +1,6 @@
 // Bildschirm: Sport - Umschalter Home Training / Fitness Studio.
 import { getPlanDay, getPhaseInfo, getTodaysWorkout } from "../workoutPlan.js";
+import { getTodaysGymWorkout } from "../gymWorkoutPlan.js";
 import { getSportTab, setSportTab, ensureTrainingStartDate } from "../sportSettings.js";
 import { WEEKDAYS, todayISO } from "../calendar.js";
 import { renderWorkoutPlayer } from "./workoutPlayerView.js";
@@ -14,7 +15,7 @@ function phaseHeaderHtml(planDay, phaseInfo) {
   `;
 }
 
-function exerciseCardsHtml(workout) {
+function exerciseCardsHtml(workout, icon) {
   const cards = workout.exercises.map((entry) => {
     const [name, detail] = entry.split(" – ");
     return `
@@ -26,7 +27,7 @@ function exerciseCardsHtml(workout) {
   }).join("");
 
   return `
-    <p class="sport-focus-label">🏠 ${workout.focus}</p>
+    <p class="sport-focus-label">${icon} ${workout.focus}</p>
     ${cards}
     <button type="button" id="start-training-btn" class="btn btn-primary sport-start-btn">🏋️ Training starten</button>
   `;
@@ -41,19 +42,10 @@ function restDayHtml() {
   `;
 }
 
-function homeTrainingHtml(weekday, workout) {
+function trainingDayHtml(weekday, workout, icon) {
   return `
     <p class="sport-day-label">${WEEKDAYS[weekday]}</p>
-    ${workout ? exerciseCardsHtml(workout) : restDayHtml()}
-  `;
-}
-
-function studioPlaceholderHtml() {
-  return `
-    <div class="section-card sport-placeholder-card">
-      <h3>🏋️ Fitness Studio</h3>
-      <p>Kommt bald!</p>
-    </div>
+    ${workout ? exerciseCardsHtml(workout, icon) : restDayHtml()}
   `;
 }
 
@@ -65,16 +57,21 @@ export async function renderSportView(container, headerContainer, profile) {
   const planDay = getPlanDay(startISO, todayISO());
   const phaseInfo = getPhaseInfo(planDay);
   const weekday = new Date().getDay();
-  const workout = getTodaysWorkout(weekday, phaseInfo.key);
+  const homeWorkout = getTodaysWorkout(weekday, phaseInfo.key);
+  const gymWorkout = getTodaysGymWorkout(weekday);
 
   function renderContent() {
+    const isHome = activeTab === "home";
+    const activeWorkout = isHome ? homeWorkout : gymWorkout;
+    const icon = isHome ? "🏠" : "🏋️";
+
     container.innerHTML = `
       ${phaseHeaderHtml(planDay, phaseInfo)}
       <div class="sport-toggle-group">
         <button type="button" class="sport-toggle ${activeTab === "home" ? "selected" : ""}" data-sport-tab="home">🏠 Home Training</button>
         <button type="button" class="sport-toggle ${activeTab === "studio" ? "selected" : ""}" data-sport-tab="studio">🏋️ Fitness Studio</button>
       </div>
-      ${activeTab === "home" ? homeTrainingHtml(weekday, workout) : studioPlaceholderHtml()}
+      ${trainingDayHtml(weekday, activeWorkout, icon)}
     `;
 
     container.querySelectorAll("[data-sport-tab]").forEach((btn) => {
@@ -90,8 +87,9 @@ export async function renderSportView(container, headerContainer, profile) {
     if (startBtn) {
       startBtn.addEventListener("click", () => {
         renderWorkoutPlayer(container, headerContainer, {
-          workout,
+          workout: activeWorkout,
           profile,
+          modeLabel: isHome ? "Home Training" : "Fitness Studio",
           onExit: () => renderSportView(container, headerContainer, profile),
         });
       });

@@ -85,6 +85,10 @@ export async function renderOverviewView(container, headerContainer, profile) {
       <h3>Stimmungs-Trend</h3>
       ${renderLineChart(stats.moodPoints, { ariaLabel: "Stimmungs-Trend", height: 140 })}
     </div>
+    <div class="section-card">
+      <h3>Tagesform-Trend</h3>
+      ${renderLineChart(stats.tagesformPoints, { ariaLabel: "Tagesform-Trend", height: 140 })}
+    </div>
   `;
 }
 
