@@ -3,6 +3,8 @@ import { getAllProfiles, createProfile } from "../profiles.js";
 import { GENDER_OPTIONS, ACTIVITY_LEVELS } from "../calorieCalc.js";
 import { ICON_PLUS } from "../icons.js";
 import { escapeHtml } from "../escapeHtml.js";
+import { importAllData } from "../backup.js";
+import { showToast } from "../toast.js";
 
 const AVAILABLE_COLORS = ["#C1502E", "#D9A441", "#27543F", "#2C3E66"];
 
@@ -45,6 +47,14 @@ export async function renderProfileSelect(container, onProfileSelected) {
         </div>
         <button type="submit" class="btn btn-primary">${ICON_PLUS} Profil anlegen</button>
       </form>
+    </div>
+    <div class="section-card">
+      <h3>Backup importieren</h3>
+      <p style="color:var(--color-text-muted);font-size:var(--font-size-label);margin-bottom:var(--space-3);">Hast du schon ein Backup? Stelle deine Profile und Tagesprotokolle hier wieder her.</p>
+      <div class="field">
+        <label for="profile-select-import-file">Backup-Datei importieren</label>
+        <input id="profile-select-import-file" type="file" accept="application/json">
+      </div>
     </div>
   `;
 
@@ -113,5 +123,19 @@ export async function renderProfileSelect(container, onProfileSelected) {
       activityLevel: selectedActivityLevel,
     });
     onProfileSelected(created);
+  });
+
+  container.querySelector("#profile-select-import-file").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const confirmed = confirm("Import überschreibt vorhandene Profile/Protokolle mit denselben IDs. Fortfahren?");
+    if (!confirmed) {
+      event.target.value = "";
+      return;
+    }
+    const text = await file.text();
+    await importAllData(text);
+    showToast("Backup importiert ✓");
+    renderProfileSelect(container, onProfileSelected);
   });
 }

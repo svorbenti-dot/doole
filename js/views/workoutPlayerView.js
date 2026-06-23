@@ -10,6 +10,14 @@ const REST_SECONDS = 15;
 const TOTAL_SECONDS = 20 * 60;
 
 let activeIntervalId = null;
+let activeWakeLock = null;
+
+function releaseActiveWakeLock() {
+  if (activeWakeLock) {
+    activeWakeLock.release().catch(() => {});
+    activeWakeLock = null;
+  }
+}
 
 // Stoppt eine laufende Session, falls der Nutzer zu einem anderen Tab
 // wechselt, ohne über den Stop-Button zu gehen.
@@ -18,6 +26,7 @@ export function stopActiveWorkoutSession() {
     clearInterval(activeIntervalId);
     activeIntervalId = null;
   }
+  releaseActiveWakeLock();
 }
 
 function formatTime(totalSeconds) {
@@ -42,6 +51,7 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
   let paused = false;
   let finished = false;
   let intervalId = null;
+  let lastTickTime = Date.now();
 
   function clearTimer() {
     if (intervalId) {
@@ -49,6 +59,16 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
       intervalId = null;
     }
     activeIntervalId = null;
+    releaseActiveWakeLock();
+  }
+
+  async function requestWakeLock() {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      activeWakeLock = await navigator.wakeLock.request("screen");
+    } catch (err) {
+      // Wake Lock nicht verfügbar (z.B. Browser-Unterstützung fehlt) - Training läuft trotzdem weiter.
+    }
   }
 
   async function logActivity() {
@@ -66,21 +86,23 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
     render();
   }
 
-  function tick() {
-    if (paused || finished) return;
+  // Verarbeitet eine simulierte Sekunde. Gibt false zurück, wenn die Session
+  // dadurch beendet wurde (z.B. nach Tab-Wechsel/Bildschirm-aus, wenn mehrere
+  // Sekunden auf einmal nachgeholt werden müssen).
+  function processOneSecond() {
     totalSecondsLeft = Math.max(0, totalSecondsLeft - 1);
     phaseSecondsLeft -= 1;
 
     if (totalSecondsLeft <= 0) {
       completeWorkout();
-      return;
+      return false;
     }
 
     if (phaseSecondsLeft <= 0) {
       playBeep();
       if (phase === "work" && index === exercises.length - 1) {
         completeWorkout();
-        return;
+        return false;
       }
       if (phase === "work") {
         phase = "rest";
@@ -92,7 +114,25 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
       }
     }
 
-    render();
+    return true;
+  }
+
+  // Misst die tatsächlich vergangene Zeit über Date.now() statt simpel pro
+  // Interval-Aufruf -1 zu rechnen - so bleibt der Timer auch korrekt, wenn
+  // der Tab im Hintergrund war und setInterval gedrosselt/verzögert wurde.
+  function tick() {
+    if (paused || finished) return;
+
+    const now = Date.now();
+    const elapsedSeconds = Math.floor((now - lastTickTime) / 1000);
+    if (elapsedSeconds <= 0) return;
+    lastTickTime += elapsedSeconds * 1000;
+
+    for (let i = 0; i < elapsedSeconds; i++) {
+      if (!processOneSecond()) break;
+    }
+
+    if (!finished) render();
   }
 
   function renderFinished() {
@@ -135,6 +175,11 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
 
     container.querySelector("#player-pause-btn").addEventListener("click", () => {
       paused = !paused;
+      if (!paused) {
+        // Beim Fortsetzen neu starten, damit die Pausenzeit nicht als
+        // vergangene Trainingszeit mitgezählt wird.
+        lastTickTime = Date.now();
+      }
       render();
     });
     container.querySelector("#player-stop-btn").addEventListener("click", () => {
@@ -145,6 +190,8 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
 
   headerContainer.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Sport</h1>`;
   render();
+  lastTickTime = Date.now();
   intervalId = setInterval(tick, 1000);
   activeIntervalId = intervalId;
+  requestWakeLock();
 }

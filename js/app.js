@@ -27,7 +27,12 @@ function renderBottomNav(activeTab) {
     <button class="nav-item ${activeTab === "chart" ? "active" : ""}" id="nav-chart" aria-label="Übersicht">${ICON_CHART}<span>Übersicht</span></button>
     <button class="nav-item ${activeTab === "settings" ? "active" : ""}" id="nav-settings" aria-label="Profil/Einstellungen">${ICON_PROFILE}<span>Profil</span></button>
   `;
-  bottomNavEl.querySelector("#nav-home").addEventListener("click", showDailyLog);
+  bottomNavEl.querySelector("#nav-home").addEventListener("click", () => {
+    // Beim Klick auf den Nav-Button immer zum echten heutigen Datum zurück,
+    // unabhängig davon, welcher Tag zuletzt im Kalender ausgewählt war.
+    state.currentDateISO = todayISO();
+    showDailyLog();
+  });
   bottomNavEl.querySelector("#nav-sport").addEventListener("click", showSport);
   bottomNavEl.querySelector("#nav-calendar").addEventListener("click", showCalendar);
   bottomNavEl.querySelector("#nav-chart").addEventListener("click", showOverview);

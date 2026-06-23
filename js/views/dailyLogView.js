@@ -87,7 +87,7 @@ function mealCardHtml(slot, meal) {
         </div>
         <div class="field">
           <label for="${slot}-kalorien">Kalorien (optional)</label>
-          <input id="${slot}-kalorien" type="number" min="0" inputmode="numeric" value="${meal.kalorien ?? ""}">
+          <input id="${slot}-kalorien" type="number" min="0" max="5000" inputmode="numeric" value="${meal.kalorien ?? ""}">
         </div>
         <div class="field">
           <label>Portionsgröße</label>
@@ -152,7 +152,9 @@ function dailySummaryHtml(log) {
 
 function kcalTotalHtml(log, profile, streak) {
   const total = Object.values(log.meals).reduce((sum, meal) => sum + (meal.kalorien || 0), 0);
-  const baseGoal = profile.calorieGoal;
+  // TDEE (Gesamtumsatz) als Basis, nicht das bereits um 500 kcal reduzierte
+  // Abnehm-Kalorienziel - sonst stimmt die "TDEE"-Beschriftung nicht.
+  const baseGoal = profile.tdee;
 
   if (baseGoal == null) {
     return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
@@ -427,7 +429,13 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     card.querySelector(`#${slot}-zeit`).addEventListener("change", (e) => { log.meals[slot].zeit = e.target.value; persist(); });
     card.querySelector(`#${slot}-was`).addEventListener("change", (e) => { log.meals[slot].was = e.target.value; persist(); });
     card.querySelector(`#${slot}-getraenk`).addEventListener("change", (e) => { log.meals[slot].getraenk = e.target.value; persist(); });
-    card.querySelector(`#${slot}-kalorien`).addEventListener("change", (e) => { log.meals[slot].kalorien = e.target.value ? Number(e.target.value) : null; persist(); });
+    card.querySelector(`#${slot}-kalorien`).addEventListener("change", (e) => {
+      log.meals[slot].kalorien = e.target.value ? Number(e.target.value) : null;
+      if (log.meals[slot].kalorien != null && log.meals[slot].kalorien > 5000) {
+        showToast("Das sind sehr viele Kalorien für eine Mahlzeit - bitte prüfen.", "error");
+      }
+      persist();
+    });
 
     card.querySelectorAll(`[data-chip-group="portion"]`).forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -494,7 +502,11 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
   });
   container.querySelector("#weight-kg").addEventListener("change", (e) => { log.weightKg = e.target.value ? Number(e.target.value) : null; persist(); });
-  container.querySelector("#steps-input").addEventListener("change", (e) => { log.steps = e.target.value ? Number(e.target.value) : null; persist(); });
+  container.querySelector("#steps-input").addEventListener("change", (e) => {
+    log.steps = e.target.value ? Math.max(0, Number(e.target.value)) : null;
+    e.target.value = log.steps ?? "";
+    persist();
+  });
 
   container.querySelector("#alcohol-yes").addEventListener("change", (e) => { log.alcohol.getrunken = e.target.checked; persist(); });
   container.querySelector("#alcohol-info").addEventListener("change", (e) => { log.alcohol.info = e.target.value; persist(); });

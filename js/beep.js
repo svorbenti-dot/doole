@@ -20,4 +20,9 @@ export function playBeep(frequency = 880, durationMs = 180) {
   } catch (err) {
     // Audio nicht verfügbar (z.B. Autoplay-Policy) - Training läuft trotzdem weiter.
   }
+
+  // Zusätzlich vibrieren, falls verfügbar - hilft z.B. bei stummgeschaltetem Handy.
+  if (navigator.vibrate) {
+    navigator.vibrate(150);
+  }
 }
