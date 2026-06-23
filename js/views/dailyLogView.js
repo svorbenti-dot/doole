@@ -1,7 +1,7 @@
 // Bildschirm: Tagesprotokoll für ein Profil an einem bestimmten Tag.
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
-  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL,
+  PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL, MEDITATION_GEFUEHL, YOGA_GEFUEHL,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav } from "../calendar.js";
@@ -101,6 +101,16 @@ function dailySummaryHtml(log) {
 
   const sleepQualityOpt = SCHLAF_QUALITAET.find((o) => o.value === log.sleep.qualitaet);
 
+  const meditationGefuehlOpt = MEDITATION_GEFUEHL.find((o) => o.value === log.meditation.gefuehl);
+  const meditationLine = log.meditation.gemacht
+    ? `Ja${meditationGefuehlOpt ? `, ${meditationGefuehlOpt.emoji} ${escapeHtml(meditationGefuehlOpt.label)}` : ""}${log.meditation.dauerMin ? `, ${log.meditation.dauerMin} Min` : ""}`
+    : "Nein";
+
+  const yogaGefuehlOpt = YOGA_GEFUEHL.find((o) => o.value === log.yoga.gefuehl);
+  const yogaLine = log.yoga.gemacht
+    ? `Ja${yogaGefuehlOpt ? `, ${yogaGefuehlOpt.emoji} ${escapeHtml(yogaGefuehlOpt.label)}` : ""}${log.yoga.dauerMin ? `, ${log.yoga.dauerMin} Min` : ""}`
+    : "Nein";
+
   return `
     <ul class="daily-summary-list">
       ${mealsHtml}
@@ -109,6 +119,8 @@ function dailySummaryHtml(log) {
       <li>${ICON_WEIGHT} <strong>Gewicht:</strong> ${log.weightKg != null ? `${log.weightKg} kg` : "Keine Angabe"}</li>
       ${activityLine}
       <li><strong>Alkohol:</strong> ${log.alcohol.getrunken ? `Ja${log.alcohol.info ? ` (${escapeHtml(log.alcohol.info)})` : ""}` : "Nein"}</li>
+      <li>🧘 <strong>Meditation:</strong> ${meditationLine}</li>
+      <li>🧘‍♀️ <strong>Yoga:</strong> ${yogaLine}</li>
       <li>${ICON_NOTE} <strong>Notizen:</strong> ${log.notes ? escapeHtml(log.notes) : "–"}</li>
     </ul>
   `;
@@ -260,6 +272,48 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       <button type="button" id="add-activity" class="btn btn-secondary">${ICON_PLUS} Aktivität hinzufügen</button>
     </div>
     <div class="section-card">
+      <h3>🧘 Meditation</h3>
+      <div class="field" style="display:flex;align-items:center;gap:var(--space-3);">
+        <label class="toggle-switch">
+          <input type="checkbox" id="meditation-yes" ${log.meditation.gemacht ? "checked" : ""}>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+        <label for="meditation-yes" style="margin:0;">Heute meditiert?</label>
+      </div>
+      ${log.meditation.gemacht ? `
+        <div class="field">
+          <label>Wie gefühlt?</label>
+          <div class="emoji-picker">${emojiPickerHtml("meditation-gefuehl", MEDITATION_GEFUEHL, log.meditation.gefuehl)}</div>
+        </div>
+        <div class="field">
+          <label for="meditation-dauer">Dauer in Minuten (optional)</label>
+          <input id="meditation-dauer" type="number" min="0" value="${log.meditation.dauerMin ?? ""}">
+        </div>
+      ` : ""}
+    </div>
+    <div class="section-card">
+      <h3>🧘‍♀️ Yoga</h3>
+      <div class="field" style="display:flex;align-items:center;gap:var(--space-3);">
+        <label class="toggle-switch">
+          <input type="checkbox" id="yoga-yes" ${log.yoga.gemacht ? "checked" : ""}>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+        <label for="yoga-yes" style="margin:0;">Heute Yoga gemacht?</label>
+      </div>
+      ${log.yoga.gemacht ? `
+        <div class="field">
+          <label>Wie gefühlt?</label>
+          <div class="emoji-picker">${emojiPickerHtml("yoga-gefuehl", YOGA_GEFUEHL, log.yoga.gefuehl)}</div>
+        </div>
+        <div class="field">
+          <label for="yoga-dauer">Dauer in Minuten (optional)</label>
+          <input id="yoga-dauer" type="number" min="0" value="${log.yoga.dauerMin ?? ""}">
+        </div>
+      ` : ""}
+    </div>
+    <div class="section-card">
       <h3>${ICON_NOTE} Notizen</h3>
       <div class="field">
         <textarea id="notes" rows="3">${escapeHtml(log.notes || "")}</textarea>
@@ -384,6 +438,40 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   container.querySelector("#alcohol-yes").addEventListener("change", (e) => { log.alcohol.getrunken = e.target.checked; persist(); });
   container.querySelector("#alcohol-info").addEventListener("change", (e) => { log.alcohol.info = e.target.value; persist(); });
   container.querySelector("#notes").addEventListener("change", (e) => { log.notes = e.target.value; persist(); });
+
+  container.querySelector("#meditation-yes").addEventListener("change", (e) => {
+    log.meditation.gemacht = e.target.checked;
+    persist();
+    renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+  });
+  const meditationDauerInput = container.querySelector("#meditation-dauer");
+  if (meditationDauerInput) {
+    meditationDauerInput.addEventListener("change", (e) => { log.meditation.dauerMin = e.target.value ? Number(e.target.value) : null; persist(); });
+  }
+  container.querySelectorAll(`[data-emoji-group="meditation-gefuehl"]`).forEach((btn) => {
+    btn.addEventListener("click", () => {
+      log.meditation.gefuehl = btn.dataset.emojiValue;
+      container.querySelectorAll(`[data-emoji-group="meditation-gefuehl"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+      persist();
+    });
+  });
+
+  container.querySelector("#yoga-yes").addEventListener("change", (e) => {
+    log.yoga.gemacht = e.target.checked;
+    persist();
+    renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+  });
+  const yogaDauerInput = container.querySelector("#yoga-dauer");
+  if (yogaDauerInput) {
+    yogaDauerInput.addEventListener("change", (e) => { log.yoga.dauerMin = e.target.value ? Number(e.target.value) : null; persist(); });
+  }
+  container.querySelectorAll(`[data-emoji-group="yoga-gefuehl"]`).forEach((btn) => {
+    btn.addEventListener("click", () => {
+      log.yoga.gefuehl = btn.dataset.emojiValue;
+      container.querySelectorAll(`[data-emoji-group="yoga-gefuehl"]`).forEach((b) => b.classList.toggle("selected", b === btn));
+      persist();
+    });
+  });
 
   function wireSupplementRow(index) {
     const row = container.querySelector(`[data-supplement-index="${index}"]`);

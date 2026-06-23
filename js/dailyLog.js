@@ -25,6 +25,8 @@ export function createEmptyDailyLog(profileId, dateISO) {
     alcohol: { getrunken: false, info: "" },
     supplements: [],
     activities: [],
+    meditation: { gemacht: false, gefuehl: null, dauerMin: null },
+    yoga: { gemacht: false, gefuehl: null, dauerMin: null },
     notes: "",
   };
 }
@@ -38,10 +40,24 @@ function migrateSupplements(log) {
   return log;
 }
 
+function migrateMeditation(log) {
+  if (!log.meditation) {
+    log.meditation = { gemacht: false, gefuehl: null, dauerMin: null };
+  }
+  return log;
+}
+
+function migrateYoga(log) {
+  if (!log.yoga) {
+    log.yoga = { gemacht: false, gefuehl: null, dauerMin: null };
+  }
+  return log;
+}
+
 export async function getDailyLog(profileId, dateISO) {
   try {
     const existing = await getItem("dailyLogs", `${profileId}_${dateISO}`);
-    return existing ? migrateSupplements(existing) : createEmptyDailyLog(profileId, dateISO);
+    return existing ? migrateYoga(migrateMeditation(migrateSupplements(existing))) : createEmptyDailyLog(profileId, dateISO);
   } catch (err) {
     showToast("Tagesprotokoll konnte nicht geladen werden.", "error");
     return createEmptyDailyLog(profileId, dateISO);
@@ -116,6 +132,20 @@ export const SUPPLEMENT_GEFUEHL = [
   { value: "viel_besser", emoji: "💪", label: "Viel besser" },
   { value: "muede", emoji: "😴", label: "Müde" },
   { value: "schlecht", emoji: "🤢", label: "Schlecht" },
+];
+
+export const MEDITATION_GEFUEHL = [
+  { value: "entspannt", emoji: "😌", label: "Entspannt" },
+  { value: "gut", emoji: "🙂", label: "Gut" },
+  { value: "neutral", emoji: "😐", label: "Neutral" },
+  { value: "unruhig", emoji: "😟", label: "Unruhig" },
+];
+
+export const YOGA_GEFUEHL = [
+  { value: "entspannt", emoji: "😌", label: "Entspannt" },
+  { value: "gestaerkt", emoji: "💪", label: "Gestärkt" },
+  { value: "gut", emoji: "🙂", label: "Gut" },
+  { value: "neutral", emoji: "😐", label: "Neutral" },
 ];
 
 export async function getLatestWeightEntry(profileId) {

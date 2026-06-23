@@ -19,6 +19,10 @@ export async function getOverviewStats(profileId, calorieGoal) {
 
   const activityDayCount = logs.filter((l) => l.activities && l.activities.length > 0).length;
 
+  const meditationDayCount = logs.filter((l) => l.meditation && l.meditation.gemacht).length;
+
+  const yogaDayCount = logs.filter((l) => l.yoga && l.yoga.gemacht).length;
+
   const sleepQualityValues = logs.filter((l) => l.sleep && l.sleep.qualitaet != null).map((l) => l.sleep.qualitaet);
   const avgSleepQuality = sleepQualityValues.length
     ? sleepQualityValues.reduce((a, b) => a + b, 0) / sleepQualityValues.length
@@ -51,6 +55,8 @@ export async function getOverviewStats(profileId, calorieGoal) {
     windowDays: OVERVIEW_WINDOW_DAYS,
     avgWaterMl,
     activityDayCount,
+    meditationDayCount,
+    yogaDayCount,
     totalDaysLogged: logs.length,
     avgSleepQuality,
     weightPoints,

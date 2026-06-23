@@ -47,6 +47,18 @@ export async function renderOverviewView(container, headerContainer, profile) {
         <span class="overview-stat-value">${stats.avgKcalDeficit != null ? `${stats.avgKcalDeficit > 0 ? "−" : "+"}${Math.abs(stats.avgKcalDeficit)} kcal` : "–"}</span>
         <span class="overview-stat-label">Ø Defizit/Tag</span>
       </div>
+      <div class="overview-stat">
+        <span class="overview-stat-icon" aria-hidden="true">🧘</span>
+        <span class="overview-stat-value">${stats.meditationDayCount}</span>
+        <span class="overview-stat-label">Meditations-Tage</span>
+      </div>
+    </div>
+    <div class="section-card overview-stat-grid">
+      <div class="overview-stat">
+        <span class="overview-stat-icon" aria-hidden="true">🧘‍♀️</span>
+        <span class="overview-stat-value">${stats.yogaDayCount}</span>
+        <span class="overview-stat-label">Yoga-Tage</span>
+      </div>
     </div>
     <div class="section-card">
       <h3>Kalorien-Trend</h3>
