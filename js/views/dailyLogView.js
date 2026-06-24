@@ -2,7 +2,7 @@
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
   PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL, MEDITATION_GEFUEHL, YOGA_GEFUEHL,
-  activityKcalBurn, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS, DAILY_DEFICIT_KCAL,
+  activityKcalBurn, sportActivityKcalBurn, SPORTARTEN, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS, DAILY_DEFICIT_KCAL,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav, todayISO } from "../calendar.js";
@@ -11,6 +11,7 @@ import { escapeHtml } from "../escapeHtml.js";
 import { formatNumberDE } from "../format.js";
 import { computeAndSaveDeficitStreak } from "../streak.js";
 import { celebrateMilestoneOnce, weightStepMilestone } from "../milestones.js";
+import { saveFoodDatabaseEntry, searchFoodDatabase, foodSizeOptions } from "../foodDb.js";
 
 // Deckel bei 800 kcal (≈ 20.000 Schritte) gegen unrealistisch hohe Boni.
 function stepsKcalBurn(steps) {
@@ -82,6 +83,7 @@ function mealCardHtml(slot, meal) {
         <div class="field">
           <label for="${slot}-was">Was gegessen</label>
           <textarea id="${slot}-was" rows="3">${escapeHtml(meal.was || "")}</textarea>
+          <div class="food-suggestions" id="${slot}-food-suggestions" hidden></div>
         </div>
         <div class="field">
           <label for="${slot}-getraenk">Getränk</label>
@@ -90,6 +92,7 @@ function mealCardHtml(slot, meal) {
         <div class="field">
           <label for="${slot}-kalorien">Kalorien (optional)</label>
           <input id="${slot}-kalorien" type="number" min="0" max="5000" inputmode="numeric" value="${meal.kalorien ?? ""}">
+          <div class="food-size-buttons" id="${slot}-food-sizes" hidden></div>
         </div>
         <div class="field">
           <label>Portionsgröße</label>
@@ -235,9 +238,15 @@ function supplementRowHtml(index, supplement) {
 }
 
 function activityRowHtml(index, activity) {
+  const kcalPreview = sportActivityKcalBurn(activity);
   return `
     <div class="field" data-activity-index="${index}">
-      <div style="display:flex;gap:var(--space-2);align-items:flex-end;">
+      <label for="activity-${index}-sport">Sportart (optional)</label>
+      <select id="activity-${index}-sport">
+        <option value="">– Eigene Eingabe –</option>
+        ${SPORTARTEN.map((s) => `<option value="${s.value}" ${activity.sport === s.value ? "selected" : ""}>${s.emoji} ${s.label} (${s.kcalPer30Min} kcal/30 Min)</option>`).join("")}
+      </select>
+      <div style="display:flex;gap:var(--space-2);align-items:flex-end;margin-top:var(--space-2);">
         <div style="flex:2;">
           <label for="activity-${index}-art">Art</label>
           <input id="activity-${index}-art" type="text" value="${escapeHtml(activity.art || "")}">
@@ -248,6 +257,7 @@ function activityRowHtml(index, activity) {
         </div>
         <button type="button" class="btn btn-secondary" data-remove-activity="${index}" aria-label="Aktivität entfernen" style="flex:0;">${ICON_TRASH}</button>
       </div>
+      ${kcalPreview != null ? `<p class="activity-kcal-preview">≈ ${kcalPreview} kcal</p>` : ""}
       <div style="margin-top:var(--space-2);">
         <label>Zustand</label>
         <div class="emoji-picker">${emojiPickerHtml(`zustand-${index}`, AKTIVITAET_ZUSTAND, activity.zustand)}</div>
@@ -410,6 +420,34 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     }
   }
 
+  // Sobald Name, Portionsgröße und Kalorien einer Mahlzeit vorhanden sind,
+  // landet das Gericht automatisch in der persönlichen Essen-Datenbank.
+  function trySaveFood(slot) {
+    const meal = log.meals[slot];
+    saveFoodDatabaseEntry(meal.was, meal.portion, meal.kalorien);
+  }
+
+  function showFoodSizeButtons(card, slot, baseKcal) {
+    const sizesEl = card.querySelector(`#${slot}-food-sizes`);
+    sizesEl.hidden = false;
+    sizesEl.innerHTML = foodSizeOptions(baseKcal).map((opt) => {
+      const portionOpt = PORTION_OPTIONS.find((p) => p.value === opt.value);
+      return `<button type="button" class="chip" data-food-size="${opt.value}" data-food-size-kcal="${opt.kcal}">${portionOpt.label} (${opt.kcal} kcal)</button>`;
+    }).join("");
+    sizesEl.querySelectorAll("[data-food-size]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const portionValue = btn.dataset.foodSize;
+        const kcalValue = Number(btn.dataset.foodSizeKcal);
+        log.meals[slot].portion = portionValue;
+        log.meals[slot].kalorien = kcalValue;
+        card.querySelector(`#${slot}-kalorien`).value = kcalValue;
+        card.querySelectorAll(`[data-chip-group="portion"]`).forEach((b) => b.classList.toggle("selected", b.dataset.chipValue === portionValue));
+        sizesEl.hidden = true;
+        persist();
+      });
+    });
+  }
+
   let openMealSlot = null;
 
   function refreshAccordionPreviews() {
@@ -441,7 +479,37 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
 
     card.querySelector(`#${slot}-zeit`).addEventListener("change", (e) => { log.meals[slot].zeit = e.target.value; persist(); });
-    card.querySelector(`#${slot}-was`).addEventListener("change", (e) => { log.meals[slot].was = e.target.value; persist(); });
+    const wasTextarea = card.querySelector(`#${slot}-was`);
+    const suggestionsEl = card.querySelector(`#${slot}-food-suggestions`);
+    wasTextarea.addEventListener("change", (e) => { log.meals[slot].was = e.target.value; persist(); trySaveFood(slot); });
+    wasTextarea.addEventListener("input", async () => {
+      const query = wasTextarea.value.trim();
+      if (query.length < 2) {
+        suggestionsEl.hidden = true;
+        suggestionsEl.innerHTML = "";
+        return;
+      }
+      const matches = await searchFoodDatabase(query);
+      if (!matches.length) {
+        suggestionsEl.hidden = true;
+        suggestionsEl.innerHTML = "";
+        return;
+      }
+      suggestionsEl.hidden = false;
+      suggestionsEl.innerHTML = matches.map((f) => `<button type="button" class="food-suggestion-btn" data-food-name="${escapeHtml(f.name)}" data-food-kcal="${f.baseKcal}">${escapeHtml(f.name)}</button>`).join("");
+      suggestionsEl.querySelectorAll("[data-food-name]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const name = btn.dataset.foodName;
+          const baseKcal = Number(btn.dataset.foodKcal);
+          wasTextarea.value = name;
+          log.meals[slot].was = name;
+          suggestionsEl.hidden = true;
+          suggestionsEl.innerHTML = "";
+          showFoodSizeButtons(card, slot, baseKcal);
+          persist();
+        });
+      });
+    });
     card.querySelector(`#${slot}-getraenk`).addEventListener("change", (e) => { log.meals[slot].getraenk = e.target.value; persist(); });
     card.querySelector(`#${slot}-kalorien`).addEventListener("change", (e) => {
       log.meals[slot].kalorien = e.target.value ? Number(e.target.value) : null;
@@ -449,6 +517,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
         showToast("Das sind sehr viele Kalorien für eine Mahlzeit - bitte prüfen.", "error");
       }
       persist();
+      trySaveFood(slot);
     });
 
     card.querySelectorAll(`[data-chip-group="portion"]`).forEach((btn) => {
@@ -456,6 +525,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
         log.meals[slot].portion = btn.dataset.chipValue;
         card.querySelectorAll(`[data-chip-group="portion"]`).forEach((b) => b.classList.toggle("selected", b === btn));
         persist();
+        trySaveFood(slot);
       });
     });
 
@@ -594,8 +664,24 @@ export async function renderDailyLogView(container, headerContainer, profile, da
 
   function wireActivityRow(index) {
     const row = container.querySelector(`[data-activity-index="${index}"]`);
+    row.querySelector(`#activity-${index}-sport`).addEventListener("change", (e) => {
+      const sportValue = e.target.value || null;
+      log.activities[index].sport = sportValue;
+      if (sportValue) {
+        const sport = SPORTARTEN.find((s) => s.value === sportValue);
+        log.activities[index].art = `${sport.emoji} ${sport.label}`;
+      }
+      persist();
+      renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+    });
     row.querySelector(`#activity-${index}-art`).addEventListener("change", (e) => { log.activities[index].art = e.target.value; persist(); });
-    row.querySelector(`#activity-${index}-dauer`).addEventListener("change", (e) => { log.activities[index].dauerMin = e.target.value ? Number(e.target.value) : null; persist(); });
+    row.querySelector(`#activity-${index}-dauer`).addEventListener("change", (e) => {
+      log.activities[index].dauerMin = e.target.value ? Number(e.target.value) : null;
+      persist();
+      if (log.activities[index].sport) {
+        renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
+      }
+    });
     row.querySelectorAll(`[data-emoji-group="zustand-${index}"]`).forEach((btn) => {
       btn.addEventListener("click", () => {
         log.activities[index].zustand = btn.dataset.emojiValue;
@@ -613,7 +699,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   log.activities.forEach((_, index) => wireActivityRow(index));
 
   container.querySelector("#add-activity").addEventListener("click", () => {
-    log.activities.push({ art: "", dauerMin: null, zustand: "" });
+    log.activities.push({ art: "", dauerMin: null, zustand: "", sport: null });
     persist();
     renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);
   });

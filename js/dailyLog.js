@@ -164,10 +164,43 @@ export const ACTIVITY_KCAL_BY_FOCUS = {
   "Bauch & Ganzkörper": 200,
 };
 
-// Ermittelt den Kalorienverbrauch einer Aktivität anhand ihres Trainingstags
-// (z.B. "Beine & Po (Home Training)"). Ohne erkennbaren Fokus gilt der
-// pauschale Fallback-Wert.
+// 15 gängige Sportarten mit Kalorienverbrauch pro 30 Minuten
+// (bezogen auf ca. 115 kg Körpergewicht), wählbar in der Aktivitäten-Sektion.
+export const SPORTARTEN = [
+  { value: "schwimmen", emoji: "🏊", label: "Schwimmen", kcalPer30Min: 350 },
+  { value: "radfahren", emoji: "🚴", label: "Radfahren", kcalPer30Min: 300 },
+  { value: "joggen", emoji: "🏃", label: "Joggen", kcalPer30Min: 400 },
+  { value: "fussball", emoji: "⚽", label: "Fußball", kcalPer30Min: 320 },
+  { value: "basketball", emoji: "🏀", label: "Basketball", kcalPer30Min: 300 },
+  { value: "tennis", emoji: "🎾", label: "Tennis", kcalPer30Min: 280 },
+  { value: "badminton", emoji: "🏸", label: "Badminton", kcalPer30Min: 250 },
+  { value: "skifahren", emoji: "⛷️", label: "Skifahren", kcalPer30Min: 300 },
+  { value: "klettern", emoji: "🧗", label: "Klettern", kcalPer30Min: 350 },
+  { value: "tischtennis", emoji: "🏓", label: "Tischtennis", kcalPer30Min: 180 },
+  { value: "boxen", emoji: "🥊", label: "Boxen/Kampfsport", kcalPer30Min: 400 },
+  { value: "wandern", emoji: "🚶", label: "Wandern", kcalPer30Min: 250 },
+  { value: "turnen", emoji: "🤸", label: "Turnen", kcalPer30Min: 280 },
+  { value: "tanzen", emoji: "💃", label: "Tanzen", kcalPer30Min: 250 },
+  { value: "volleyball", emoji: "🏐", label: "Volleyball", kcalPer30Min: 200 },
+];
+
+// Berechnet den Kalorienverbrauch einer Sportart-Aktivität anteilig zur
+// tatsächlichen Dauer (z.B. 15 Min Joggen = 200 kcal). Gibt null zurück,
+// wenn keine Sportart aus der Liste gewählt wurde.
+export function sportActivityKcalBurn(activity) {
+  if (!activity.sport) return null;
+  const sport = SPORTARTEN.find((s) => s.value === activity.sport);
+  if (!sport) return null;
+  return Math.round(((activity.dauerMin || 0) / 30) * sport.kcalPer30Min);
+}
+
+// Ermittelt den Kalorienverbrauch einer Aktivität: zuerst anhand einer
+// gewählten Sportart (anteilig zur Dauer), sonst anhand des Trainingstags
+// im Text (z.B. "Beine & Po (Home Training)"). Ohne erkennbaren Fokus gilt
+// der pauschale Fallback-Wert.
 export function activityKcalBurn(activity) {
+  const sportBurn = sportActivityKcalBurn(activity);
+  if (sportBurn != null) return sportBurn;
   const focus = Object.keys(ACTIVITY_KCAL_BY_FOCUS).find(
     (f) => activity.art && activity.art.includes(f)
   );

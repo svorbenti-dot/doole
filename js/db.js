@@ -3,7 +3,7 @@
 // So bleibt es wiederverwendbar, falls in späteren Phasen neue Stores nötig sind.
 
 const DB_NAME = "doole-db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbPromise = null;
 
@@ -27,6 +27,9 @@ export function openDatabase() {
       }
       if (!db.objectStoreNames.contains("settings")) {
         db.createObjectStore("settings", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("foodDatabase")) {
+        db.createObjectStore("foodDatabase", { keyPath: "id" });
       }
     };
 
