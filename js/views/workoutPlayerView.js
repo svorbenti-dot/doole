@@ -4,6 +4,7 @@ import { getExerciseIcon } from "../exerciseIcons.js";
 import { playBeep } from "../beep.js";
 import { getDailyLog, saveDailyLog } from "../dailyLog.js";
 import { todayISO } from "../calendar.js";
+import { celebrateMilestoneOnce } from "../milestones.js";
 
 const WORK_SECONDS = 45;
 const REST_SECONDS = 15;
@@ -77,6 +78,7 @@ export function renderWorkoutPlayer(container, headerContainer, { workout, profi
     const minutes = Math.max(1, Math.round((TOTAL_SECONDS - totalSecondsLeft) / 60));
     log.activities.push({ art: `${workout.focus} (${modeLabel})`, dauerMin: minutes, zustand: "gut" });
     await saveDailyLog(log);
+    await celebrateMilestoneOnce(profile.id, "first_workout", "Erstes Training abgeschlossen! Weiter so!");
   }
 
   function completeWorkout() {

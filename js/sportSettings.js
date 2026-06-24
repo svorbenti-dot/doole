@@ -6,6 +6,7 @@ import { todayISO } from "./calendar.js";
 
 const SPORT_TAB_KEY = "sportTab";
 const TRAINING_START_KEY = "trainingStartDate";
+const HEALTH_DISCLAIMER_KEY = "healthDisclaimerShown";
 
 export async function getSportTab() {
   const record = await getItem("settings", SPORT_TAB_KEY);
@@ -24,4 +25,14 @@ export async function ensureTrainingStartDate() {
   const startISO = todayISO();
   await putItem("settings", { id: TRAINING_START_KEY, value: startISO });
   return startISO;
+}
+
+// Gesundheits-Hinweis im Sport-Tab: nur beim allerersten Öffnen anzeigen.
+export async function hasSeenHealthDisclaimer() {
+  const record = await getItem("settings", HEALTH_DISCLAIMER_KEY);
+  return !!record;
+}
+
+export async function markHealthDisclaimerSeen() {
+  await putItem("settings", { id: HEALTH_DISCLAIMER_KEY, value: true });
 }

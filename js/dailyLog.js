@@ -146,9 +146,29 @@ export const WATER_GOAL_ML = 4000;
 // Geschätzter Kalorienverbrauch, der zum Tagesziel addiert wird: pro
 // geloggter Trainingseinheit (Sport-Tab-Session, ca. 20 Min) und pro
 // Yoga-Einheit am Tag. So darf man mehr essen, je mehr man trainiert.
+// Fallback-Wert für Aktivitäten ohne erkennbaren Trainingstag (z.B. frei
+// eingetragene Aktivitäten wie "Spazieren").
 export const ACTIVITY_KCAL_PER_SESSION = 150;
 export const YOGA_KCAL_BURN = 80;
 export const STEP_KCAL_PER_STEP = 0.04;
+
+// Kalorienverbrauch je Trainingstag/-fokus (Sport-Tab-Session, ca. 20 Min).
+export const ACTIVITY_KCAL_BY_FOCUS = {
+  "Beine & Po": 180,
+  "Brust & Arme": 150,
+  "Rücken & Mobilität": 80,
+  "Bauch & Ganzkörper": 200,
+};
+
+// Ermittelt den Kalorienverbrauch einer Aktivität anhand ihres Trainingstags
+// (z.B. "Beine & Po (Home Training)"). Ohne erkennbaren Fokus gilt der
+// pauschale Fallback-Wert.
+export function activityKcalBurn(activity) {
+  const focus = Object.keys(ACTIVITY_KCAL_BY_FOCUS).find(
+    (f) => activity.art && activity.art.includes(f)
+  );
+  return focus ? ACTIVITY_KCAL_BY_FOCUS[focus] : ACTIVITY_KCAL_PER_SESSION;
+}
 
 export const AKTIVITAET_ZUSTAND = [
   { value: "schlecht", emoji: "😫", label: "Schlecht" },

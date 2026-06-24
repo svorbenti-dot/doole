@@ -1,7 +1,7 @@
 // Bildschirm: Sport - Umschalter Home Training / Fitness Studio.
 import { getPlanDay, getPhaseInfo, getTodaysWorkout } from "../workoutPlan.js";
 import { getTodaysGymWorkout } from "../gymWorkoutPlan.js";
-import { getSportTab, setSportTab, ensureTrainingStartDate } from "../sportSettings.js";
+import { getSportTab, setSportTab, ensureTrainingStartDate, hasSeenHealthDisclaimer, markHealthDisclaimerSeen } from "../sportSettings.js";
 import { WEEKDAYS, todayISO } from "../calendar.js";
 import { renderWorkoutPlayer } from "./workoutPlayerView.js";
 
@@ -49,8 +49,29 @@ function trainingDayHtml(weekday, workout, icon) {
   `;
 }
 
+function showHealthDisclaimer() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <h3>⚠️ Wichtiger Hinweis</h3>
+      <p>Dieser Trainingsplan ist ein allgemeiner Vorschlag. Bei Rückenproblemen oder anderen Beschwerden sprich bitte mit einem Arzt oder Physiotherapeuten bevor du startest.</p>
+      <button type="button" id="health-disclaimer-ok" class="btn btn-primary">Verstanden</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector("#health-disclaimer-ok").addEventListener("click", async () => {
+    await markHealthDisclaimerSeen();
+    overlay.remove();
+  });
+}
+
 export async function renderSportView(container, headerContainer, profile) {
   headerContainer.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Sport</h1>`;
+
+  if (!(await hasSeenHealthDisclaimer())) {
+    showHealthDisclaimer();
+  }
 
   let activeTab = await getSportTab();
   const startISO = await ensureTrainingStartDate();

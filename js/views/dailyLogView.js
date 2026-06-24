@@ -2,7 +2,7 @@
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
   PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL, MEDITATION_GEFUEHL, YOGA_GEFUEHL,
-  ACTIVITY_KCAL_PER_SESSION, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS,
+  activityKcalBurn, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav, todayISO } from "../calendar.js";
@@ -10,6 +10,7 @@ import { ICON_WATER, ICON_SLEEP, ICON_WEIGHT, ICON_ACTIVITY, ICON_NOTE, ICON_PLU
 import { escapeHtml } from "../escapeHtml.js";
 import { formatNumberDE } from "../format.js";
 import { computeAndSaveDeficitStreak } from "../streak.js";
+import { celebrateMilestoneOnce, weightStepMilestone } from "../milestones.js";
 
 function stepsKcalBurn(steps) {
   return steps != null ? Math.round(steps * STEP_KCAL_PER_STEP) : 0;
@@ -160,7 +161,7 @@ function kcalTotalHtml(log, profile, streak) {
     return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
   }
 
-  const activityBurn = log.activities.length * ACTIVITY_KCAL_PER_SESSION;
+  const activityBurn = log.activities.reduce((sum, activity) => sum + activityKcalBurn(activity), 0);
   const yogaBurn = log.yoga.gemacht ? YOGA_KCAL_BURN : 0;
   const stepsBurn = stepsKcalBurn(log.steps);
   const goal = baseGoal + activityBurn + yogaBurn + stepsBurn;
@@ -192,12 +193,17 @@ function kcalTotalHtml(log, profile, streak) {
     ? `<p class="kcal-streak">🔥 ${streak} ${streak === 1 ? "Tag" : "Tage"} in Folge im Defizit</p>`
     : "";
 
+  const deficitWarningHtml = diff > 750
+    ? `<p class="kcal-deficit-warning">⚠️ Dein Defizit ist heute sehr hoch. Iss noch etwas, um Muskelabbau zu vermeiden.</p>`
+    : "";
+
   return `
     <h3>Kalorien heute</h3>
     <p class="kcal-total-value">Gegessen ${total} / Ziel ${goal} kcal</p>
     ${breakdownHtml}
     <div class="water-progress"><div class="water-progress-fill" style="width:${progressPct}%"></div></div>
     <p class="kcal-status">${statusEmoji} ${statusText}</p>
+    ${deficitWarningHtml}
     ${streakHtml}
   `;
 }
@@ -501,7 +507,14 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       persist();
     });
   });
-  container.querySelector("#weight-kg").addEventListener("change", (e) => { log.weightKg = e.target.value ? Number(e.target.value) : null; persist(); });
+  container.querySelector("#weight-kg").addEventListener("change", (e) => {
+    log.weightKg = e.target.value ? Number(e.target.value) : null;
+    if (log.weightKg != null) {
+      const { id, threshold } = weightStepMilestone(log.weightKg);
+      celebrateMilestoneOnce(profile.id, id, `Gewicht erstmals unter ${threshold} kg!`);
+    }
+    persist();
+  });
   container.querySelector("#steps-input").addEventListener("change", (e) => {
     log.steps = e.target.value ? Math.max(0, Number(e.target.value)) : null;
     e.target.value = log.steps ?? "";
