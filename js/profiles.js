@@ -42,6 +42,11 @@ export async function getAllProfiles() {
 
 export async function deleteProfile(id) {
   try {
+    const allLogs = await getAllItems("dailyLogs");
+    const logsToDelete = allLogs.filter((log) => log.profileId === id);
+    for (const log of logsToDelete) {
+      await deleteItem("dailyLogs", log.id);
+    }
     await deleteItem("profiles", id);
   } catch (err) {
     showToast("Profil konnte nicht gelöscht werden.", "error");

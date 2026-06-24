@@ -2,7 +2,7 @@
 import {
   getDailyLog, saveDailyLog, MEAL_SLOT_LABELS, MEAL_SLOT_EMOJIS,
   PORTION_OPTIONS, GEFUEHL_VORHER, GEFUEHL_NACHHER, SCHLAF_QUALITAET, WATER_GOAL_ML, AKTIVITAET_ZUSTAND, SUPPLEMENT_GEFUEHL, MEDITATION_GEFUEHL, YOGA_GEFUEHL,
-  activityKcalBurn, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS,
+  activityKcalBurn, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, TAGESFORM_OPTIONS, DAILY_DEFICIT_KCAL,
 } from "../dailyLog.js";
 import { showToast } from "../toast.js";
 import { renderDateNav, todayISO } from "../calendar.js";
@@ -12,15 +12,16 @@ import { formatNumberDE } from "../format.js";
 import { computeAndSaveDeficitStreak } from "../streak.js";
 import { celebrateMilestoneOnce, weightStepMilestone } from "../milestones.js";
 
+// Deckel bei 800 kcal (≈ 20.000 Schritte) gegen unrealistisch hohe Boni.
 function stepsKcalBurn(steps) {
-  return steps != null ? Math.round(steps * STEP_KCAL_PER_STEP) : 0;
+  return steps != null ? Math.min(800, Math.round(steps * STEP_KCAL_PER_STEP)) : 0;
 }
 
 function tagesformCardHtml(log) {
   return `
     <div class="section-card">
       <h3>Wie startest du in den Tag?</h3>
-      <div class="emoji-picker">
+      <div class="emoji-picker tagesform-picker">
         ${TAGESFORM_OPTIONS.map((opt) => `
           <button type="button" class="emoji-btn emoji-btn-labeled ${log.tagesform === opt.value ? "selected" : ""}" data-tagesform-value="${opt.value}" aria-label="Tagesform: ${opt.label}">
             <span aria-hidden="true">${opt.emoji}</span>
@@ -164,30 +165,36 @@ function kcalTotalHtml(log, profile, streak) {
   const activityBurn = log.activities.reduce((sum, activity) => sum + activityKcalBurn(activity), 0);
   const yogaBurn = log.yoga.gemacht ? YOGA_KCAL_BURN : 0;
   const stepsBurn = stepsKcalBurn(log.steps);
-  const goal = baseGoal + activityBurn + yogaBurn + stepsBurn;
+  const tagesbedarf = baseGoal + activityBurn + yogaBurn + stepsBurn;
+  const zielMitDefizit = tagesbedarf - DAILY_DEFICIT_KCAL;
 
-  const breakdownParts = [`TDEE ${baseGoal}`];
-  if (activityBurn > 0) breakdownParts.push(`Sport +${activityBurn}`);
-  if (yogaBurn > 0) breakdownParts.push(`Yoga +${yogaBurn}`);
-  if (stepsBurn > 0) breakdownParts.push(`Schritte +${stepsBurn}`);
-  const breakdownHtml = activityBurn > 0 || yogaBurn > 0 || stepsBurn > 0
-    ? `<p class="kcal-breakdown">${breakdownParts.join(" + ")} = ${goal} kcal Tagesziel</p>`
-    : "";
+  const bedarfParts = [`TDEE ${baseGoal}`];
+  if (activityBurn > 0) bedarfParts.push(`Sport ${activityBurn}`);
+  if (yogaBurn > 0) bedarfParts.push(`Yoga ${yogaBurn}`);
+  if (stepsBurn > 0) bedarfParts.push(`Schritte ${stepsBurn}`);
 
-  const diff = goal - total;
+  const diff = tagesbedarf - total;
+  let zone;
   let statusEmoji;
   let statusText;
+  if (diff > 750) {
+    zone = "red";
+  } else if (diff < 100) {
+    zone = "yellow";
+  } else {
+    zone = "green";
+  }
   if (diff > 0) {
     statusEmoji = "😊";
-    statusText = `Defizit ${diff} kcal`;
+    statusText = `${diff} kcal unter Tagesbedarf`;
   } else if (diff === 0) {
     statusEmoji = "😐";
-    statusText = "Ziel erreicht";
+    statusText = "Tagesbedarf erreicht";
   } else {
     statusEmoji = "😟";
-    statusText = `${-diff} kcal über Ziel`;
+    statusText = `${-diff} kcal über Tagesbedarf`;
   }
-  const progressPct = goal > 0 ? Math.min(100, Math.round((total / goal) * 100)) : 0;
+  const progressPct = tagesbedarf > 0 ? Math.min(100, Math.round((total / tagesbedarf) * 100)) : 0;
 
   const streakHtml = streak > 0
     ? `<p class="kcal-streak">🔥 ${streak} ${streak === 1 ? "Tag" : "Tage"} in Folge im Defizit</p>`
@@ -199,9 +206,10 @@ function kcalTotalHtml(log, profile, streak) {
 
   return `
     <h3>Kalorien heute</h3>
-    <p class="kcal-total-value">Gegessen ${total} / Ziel ${goal} kcal</p>
-    ${breakdownHtml}
-    <div class="water-progress"><div class="water-progress-fill" style="width:${progressPct}%"></div></div>
+    <p class="kcal-breakdown">${bedarfParts.join(" + ")} = ${tagesbedarf} kcal Tagesbedarf</p>
+    <p class="kcal-ziel-defizit">Ziel mit ${DAILY_DEFICIT_KCAL} Defizit: ${zielMitDefizit} kcal</p>
+    <p class="kcal-total-value">Gegessen ${total} kcal</p>
+    <div class="water-progress"><div class="water-progress-fill kcal-zone-${zone}" style="width:${progressPct}%"></div></div>
     <p class="kcal-status">${statusEmoji} ${statusText}</p>
     ${deficitWarningHtml}
     ${streakHtml}
@@ -516,7 +524,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     persist();
   });
   container.querySelector("#steps-input").addEventListener("change", (e) => {
-    log.steps = e.target.value ? Math.max(0, Number(e.target.value)) : null;
+    log.steps = e.target.value ? Math.max(0, Math.round(Number(e.target.value))) : null;
     e.target.value = log.steps ?? "";
     persist();
   });

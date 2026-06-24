@@ -325,6 +325,27 @@ h1, h2, h3 {
   color: #fff;
 }
 
+/* Tagesform-Check: 5 Buttons kompakt in einer Reihe */
+.tagesform-picker {
+  flex-wrap: nowrap;
+}
+
+.tagesform-picker .emoji-btn-labeled {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  padding: var(--space-1);
+}
+
+.tagesform-picker .emoji-btn-labeled > span:first-child {
+  font-size: 18px;
+}
+
+.tagesform-picker .emoji-btn-caption {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
 /* Wasser-Tracker */
 .water-card {
   display: flex;
@@ -539,6 +560,13 @@ h1, h2, h3 {
   color: var(--color-text-muted);
 }
 
+.overview-movement-line {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
 .chart-wrap {
   display: flex;
   flex-direction: column;
@@ -603,6 +631,13 @@ h1, h2, h3 {
 }
 
 .kcal-breakdown {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.kcal-ziel-defizit {
   font-size: var(--font-size-label);
   color: var(--color-text-muted);
   margin: 0 0 var(--space-2) 0;
@@ -612,6 +647,18 @@ h1, h2, h3 {
   font-size: var(--font-size-label);
   color: var(--color-text-muted);
   margin: var(--space-2) 0 0 0;
+}
+
+.kcal-zone-green {
+  background: var(--color-secondary);
+}
+
+.kcal-zone-yellow {
+  background: var(--color-accent);
+}
+
+.kcal-zone-red {
+  background: var(--color-danger);
 }
 
 .kcal-streak {

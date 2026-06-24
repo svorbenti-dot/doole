@@ -132,7 +132,7 @@ export const TAGESFORM_OPTIONS = [
   { value: 2, emoji: "😐", label: "Okay" },
   { value: 3, emoji: "🙂", label: "Gut" },
   { value: 4, emoji: "💪", label: "Top" },
-  { value: 5, emoji: "🔥", label: "Energiegeladen" },
+  { value: 5, emoji: "🔥", label: "Power" },
 ];
 
 export const SCHLAF_QUALITAET = [
@@ -151,6 +151,10 @@ export const WATER_GOAL_ML = 4000;
 export const ACTIVITY_KCAL_PER_SESSION = 150;
 export const YOGA_KCAL_BURN = 80;
 export const STEP_KCAL_PER_STEP = 0.04;
+
+// Empfohlenes Kaloriendefizit pro Tag zum Abnehmen, abgezogen vom
+// (dynamischen) Gesamttagesbedarf.
+export const DAILY_DEFICIT_KCAL = 500;
 
 // Kalorienverbrauch je Trainingstag/-fokus (Sport-Tab-Session, ca. 20 Min).
 export const ACTIVITY_KCAL_BY_FOCUS = {

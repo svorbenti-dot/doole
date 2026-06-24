@@ -2,7 +2,7 @@
 import { getOverviewStats } from "../stats.js";
 import { renderLineChart } from "../charts.js";
 import { SCHLAF_QUALITAET } from "../dailyLog.js";
-import { ICON_WATER, ICON_ACTIVITY, ICON_SLEEP, ICON_MEAL } from "../icons.js";
+import { ICON_WATER, ICON_SLEEP, ICON_MEAL } from "../icons.js";
 import { escapeHtml } from "../escapeHtml.js";
 import { formatNumberDE } from "../format.js";
 
@@ -27,11 +27,6 @@ export async function renderOverviewView(container, headerContainer, profile) {
         <span class="overview-stat-label">Ø Wasser/Tag</span>
       </div>
       <div class="overview-stat">
-        <span class="overview-stat-icon" aria-hidden="true">${ICON_ACTIVITY}</span>
-        <span class="overview-stat-value">${stats.activityDayCount}</span>
-        <span class="overview-stat-label">Sport-Tage</span>
-      </div>
-      <div class="overview-stat">
         <span class="overview-stat-icon" aria-hidden="true">${ICON_SLEEP}</span>
         <span class="overview-stat-value">${escapeHtml(avgSleepLabel)}</span>
         <span class="overview-stat-label">Ø Schlafqualität</span>
@@ -54,24 +49,9 @@ export async function renderOverviewView(container, headerContainer, profile) {
         <span class="overview-stat-label">Meditations-Tage</span>
       </div>
     </div>
-    <div class="section-card overview-stat-grid">
-      <div class="overview-stat">
-        <span class="overview-stat-icon" aria-hidden="true">🧘‍♀️</span>
-        <span class="overview-stat-value">${stats.yogaDayCount}</span>
-        <span class="overview-stat-label">Yoga-Tage</span>
-      </div>
-      <div class="overview-stat">
-        <span class="overview-stat-icon" aria-hidden="true">🚶</span>
-        <span class="overview-stat-value">${stats.avgStepsPerDay != null ? formatNumberDE(stats.avgStepsPerDay) : "–"}</span>
-        <span class="overview-stat-label">Ø Schritte/Tag</span>
-      </div>
-    </div>
-    <div class="section-card overview-stat-grid">
-      <div class="overview-stat">
-        <span class="overview-stat-icon" aria-hidden="true">🚶</span>
-        <span class="overview-stat-value">${stats.avgStepsLastWeek != null ? `Ø ${formatNumberDE(stats.avgStepsLastWeek)} Schritte/Tag` : "–"}</span>
-        <span class="overview-stat-label">Wochen-Durchschnitt</span>
-      </div>
+    <div class="section-card">
+      <h3>Bewegung</h3>
+      <p class="overview-movement-line">🚶 ${stats.avgStepsPerDay != null ? `Ø ${formatNumberDE(stats.avgStepsPerDay)} Schritte/Tag` : "Keine Schritte erfasst"} · 🧘 ${stats.yogaDayCount}× Yoga · 🏋️ ${stats.activityDayCount}× Sport</p>
     </div>
     <div class="section-card">
       <h3>Kalorien-Trend</h3>
