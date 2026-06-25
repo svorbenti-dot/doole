@@ -113,6 +113,7 @@ export async function renderSettingsView(container, currentProfile, callbacks) {
     }
     const text = await file.text();
     await importAllData(text);
+    showToast("Backup importiert ✓");
     renderSettingsView(container, currentProfile, callbacks);
   });
 

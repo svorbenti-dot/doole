@@ -283,7 +283,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   renderDateNav(headerContainer, dateISO, onDateChange);
   const log = await getDailyLog(profile.id, dateISO);
   // Der Streak bezieht sich immer auf "heute", nicht auf den gerade angezeigten Tag.
-  const streak = dateISO === todayISO() ? await computeAndSaveDeficitStreak(profile.id, profile.tdee) : 0;
+  let streak = dateISO === todayISO() ? await computeAndSaveDeficitStreak(profile.id, profile.tdee) : 0;
 
   container.innerHTML = `
     ${tagesformCardHtml(log)}
@@ -434,6 +434,14 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     }
   }
 
+  async function persistAndRefreshStreak() {
+    await persist();
+    if (dateISO === todayISO()) {
+      streak = await computeAndSaveDeficitStreak(profile.id, profile.tdee);
+      updateMealKcalTotal();
+    }
+  }
+
   // Sobald Name, Portionsgröße und Kalorien einer Mahlzeit vorhanden sind,
   // landet das Gericht automatisch in der persönlichen Essen-Datenbank.
   function trySaveFood(slot) {
@@ -457,7 +465,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
         card.querySelector(`#${slot}-kalorien`).value = kcalValue;
         card.querySelectorAll(`[data-chip-group="portion"]`).forEach((b) => b.classList.toggle("selected", b.dataset.chipValue === portionValue));
         sizesEl.hidden = true;
-        persist();
+        persistAndRefreshStreak();
       });
     });
   }
@@ -526,11 +534,12 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
     card.querySelector(`#${slot}-getraenk`).addEventListener("change", (e) => { log.meals[slot].getraenk = e.target.value; persist(); });
     card.querySelector(`#${slot}-kalorien`).addEventListener("change", (e) => {
-      log.meals[slot].kalorien = e.target.value ? Number(e.target.value) : null;
+      log.meals[slot].kalorien = e.target.value ? Math.max(0, Number(e.target.value)) : null;
+      e.target.value = log.meals[slot].kalorien ?? "";
       if (log.meals[slot].kalorien != null && log.meals[slot].kalorien > 5000) {
         showToast("Das sind sehr viele Kalorien für eine Mahlzeit - bitte prüfen.", "error");
       }
-      persist();
+      persistAndRefreshStreak();
       trySaveFood(slot);
     });
 
@@ -592,7 +601,11 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       persist();
     });
   });
-  container.querySelector("#sleep-hours").addEventListener("change", (e) => { log.sleep.stunden = e.target.value ? Number(e.target.value) : null; persist(); });
+  container.querySelector("#sleep-hours").addEventListener("change", (e) => {
+    log.sleep.stunden = e.target.value ? Math.max(0, Number(e.target.value)) : null;
+    e.target.value = log.sleep.stunden ?? "";
+    persist();
+  });
   container.querySelectorAll("[data-sleep-quality-value]").forEach((btn) => {
     btn.addEventListener("click", () => {
       log.sleep.qualitaet = Number(btn.dataset.sleepQualityValue);
@@ -601,7 +614,8 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
   });
   container.querySelector("#weight-kg").addEventListener("change", (e) => {
-    log.weightKg = e.target.value ? Number(e.target.value) : null;
+    log.weightKg = e.target.value ? Math.max(0, Number(e.target.value)) : null;
+    e.target.value = log.weightKg ?? "";
     if (log.weightKg != null) {
       const { id, threshold } = weightStepMilestone(log.weightKg);
       celebrateMilestoneOnce(profile.id, id, `Gewicht erstmals unter ${threshold} kg!`);
@@ -733,7 +747,8 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
     row.querySelector(`#activity-${index}-art`).addEventListener("change", (e) => { log.activities[index].art = e.target.value; persist(); });
     row.querySelector(`#activity-${index}-dauer`).addEventListener("change", (e) => {
-      log.activities[index].dauerMin = e.target.value ? Number(e.target.value) : null;
+      log.activities[index].dauerMin = e.target.value ? Math.min(480, Math.max(0, Number(e.target.value))) : null;
+      e.target.value = log.activities[index].dauerMin ?? "";
       persist();
       if (log.activities[index].sport) {
         renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);

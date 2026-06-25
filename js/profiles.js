@@ -47,6 +47,9 @@ export async function deleteProfile(id) {
     for (const log of logsToDelete) {
       await deleteItem("dailyLogs", log.id);
     }
+    for (const key of [`streak_${id}`, `milestones_${id}`, `sportTab_${id}`, `trainingStartDate_${id}`, `healthDisclaimerShown_${id}`]) {
+      await deleteItem("settings", key);
+    }
     await deleteItem("profiles", id);
   } catch (err) {
     showToast("Profil konnte nicht gelöscht werden.", "error");

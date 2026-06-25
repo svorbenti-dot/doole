@@ -49,7 +49,7 @@ function trainingDayHtml(weekday, workout, icon) {
   `;
 }
 
-function showHealthDisclaimer() {
+function showHealthDisclaimer(profileId) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
@@ -61,7 +61,7 @@ function showHealthDisclaimer() {
   `;
   document.body.appendChild(overlay);
   overlay.querySelector("#health-disclaimer-ok").addEventListener("click", async () => {
-    await markHealthDisclaimerSeen();
+    await markHealthDisclaimerSeen(profileId);
     overlay.remove();
   });
 }
@@ -69,12 +69,12 @@ function showHealthDisclaimer() {
 export async function renderSportView(container, headerContainer, profile) {
   headerContainer.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Sport</h1>`;
 
-  if (!(await hasSeenHealthDisclaimer())) {
-    showHealthDisclaimer();
+  if (!(await hasSeenHealthDisclaimer(profile.id))) {
+    showHealthDisclaimer(profile.id);
   }
 
-  let activeTab = await getSportTab();
-  const startISO = await ensureTrainingStartDate();
+  let activeTab = await getSportTab(profile.id);
+  const startISO = await ensureTrainingStartDate(profile.id);
   const planDay = getPlanDay(startISO, todayISO());
   const phaseInfo = getPhaseInfo(planDay);
   const weekday = new Date().getDay();
@@ -99,7 +99,7 @@ export async function renderSportView(container, headerContainer, profile) {
       btn.addEventListener("click", async () => {
         if (btn.dataset.sportTab === activeTab) return;
         activeTab = btn.dataset.sportTab;
-        await setSportTab(activeTab);
+        await setSportTab(profile.id, activeTab);
         renderContent();
       });
     });
