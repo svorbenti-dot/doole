@@ -164,6 +164,23 @@ export const ACTIVITY_KCAL_BY_FOCUS = {
   "Bauch & Ganzkörper": 200,
 };
 
+// Gleiche Trainingstag-Zuordnung wie im Sport-Tab (Mo/Do, Di/Fr, Mi, Sa),
+// als Fallback für Aktivitäten ohne erkennbare Sportart/Fokus-Angabe.
+// Sonntag hat bewusst keinen Eintrag (kein geplanter Trainingstag).
+const WEEKDAY_ACTIVITY_KCAL = {
+  1: ACTIVITY_KCAL_BY_FOCUS["Beine & Po"],
+  2: ACTIVITY_KCAL_BY_FOCUS["Brust & Arme"],
+  3: ACTIVITY_KCAL_BY_FOCUS["Rücken & Mobilität"],
+  4: ACTIVITY_KCAL_BY_FOCUS["Beine & Po"],
+  5: ACTIVITY_KCAL_BY_FOCUS["Brust & Arme"],
+  6: ACTIVITY_KCAL_BY_FOCUS["Bauch & Ganzkörper"],
+};
+
+function weekdayFromISO(dateISO) {
+  const [y, m, d] = dateISO.split("-").map(Number);
+  return new Date(y, m - 1, d).getDay();
+}
+
 // 15 gängige Sportarten mit Kalorienverbrauch pro 30 Minuten
 // (bezogen auf ca. 115 kg Körpergewicht), wählbar in der Aktivitäten-Sektion.
 export const SPORTARTEN = [
@@ -197,14 +214,21 @@ export function sportActivityKcalBurn(activity) {
 // Ermittelt den Kalorienverbrauch einer Aktivität: zuerst anhand einer
 // gewählten Sportart (anteilig zur Dauer), sonst anhand des Trainingstags
 // im Text (z.B. "Beine & Po (Home Training)"). Ohne erkennbaren Fokus gilt
-// der pauschale Fallback-Wert.
-export function activityKcalBurn(activity) {
+// der Wochentags-Wert des Trainingstags (z.B. Mittwoch = Rücken &
+// Mobilität = 80 kcal), und nur ohne Wochentags-Eintrag (Sonntag) der
+// pauschale Fallback-Wert.
+export function activityKcalBurn(activity, dateISO) {
   const sportBurn = sportActivityKcalBurn(activity);
   if (sportBurn != null) return sportBurn;
   const focus = Object.keys(ACTIVITY_KCAL_BY_FOCUS).find(
     (f) => activity.art && activity.art.includes(f)
   );
-  return focus ? ACTIVITY_KCAL_BY_FOCUS[focus] : ACTIVITY_KCAL_PER_SESSION;
+  if (focus) return ACTIVITY_KCAL_BY_FOCUS[focus];
+  if (dateISO) {
+    const weekdayRate = WEEKDAY_ACTIVITY_KCAL[weekdayFromISO(dateISO)];
+    if (weekdayRate != null) return weekdayRate;
+  }
+  return ACTIVITY_KCAL_PER_SESSION;
 }
 
 export const AKTIVITAET_ZUSTAND = [

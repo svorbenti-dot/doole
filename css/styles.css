@@ -434,6 +434,13 @@ h1, h2, h3 {
   transition: width 250ms ease;
 }
 
+.water-reminder {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: var(--space-2) 0 0 0;
+}
+
 /* Toggle-Schalter (z.B. Alkohol) */
 .toggle-switch {
   position: relative;
@@ -595,6 +602,14 @@ h1, h2, h3 {
 .overview-movement-line {
   font-size: var(--font-size-body);
   color: var(--color-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.overview-best-week {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-secondary);
   margin: 0;
   line-height: 1.5;
 }

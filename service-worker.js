@@ -1,7 +1,7 @@
 // Cache-first-Strategie für alle statischen Dateien, damit die App nach
 // dem ersten Aufruf komplett offline funktioniert. Nutzerdaten liegen
 // ohnehin in IndexedDB und werden hier nicht angefasst.
-const CACHE_NAME = "doole-cache-v27";
+const CACHE_NAME = "doole-cache-v31";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -29,6 +29,7 @@ const ASSETS_TO_CACHE = [
   "./js/streak.js",
   "./js/milestones.js",
   "./js/foodDb.js",
+  "./js/supplementDb.js",
   "./js/views/profileSelect.js",
   "./js/views/dailyLogView.js",
   "./js/views/settingsView.js",

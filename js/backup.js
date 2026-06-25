@@ -8,7 +8,8 @@ export async function exportAllData() {
     const dailyLogs = await getAllItems("dailyLogs");
     const settings = await getAllItems("settings");
     const foodDatabase = await getAllItems("foodDatabase");
-    const payload = { exportedAt: new Date().toISOString(), profiles, dailyLogs, settings, foodDatabase };
+    const supplementDatabase = await getAllItems("supplementDatabase");
+    const payload = { exportedAt: new Date().toISOString(), profiles, dailyLogs, settings, foodDatabase, supplementDatabase };
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -37,6 +38,9 @@ export async function importAllData(jsonText) {
     }
     for (const food of payload.foodDatabase || []) {
       await putItem("foodDatabase", food);
+    }
+    for (const supplement of payload.supplementDatabase || []) {
+      await putItem("supplementDatabase", supplement);
     }
   } catch (err) {
     showToast("Import fehlgeschlagen. Ist die Datei eine gültige Doole-Backup-Datei?", "error");

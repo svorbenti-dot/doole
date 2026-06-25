@@ -9,7 +9,7 @@ import { formatNumberDE } from "../format.js";
 export async function renderOverviewView(container, headerContainer, profile) {
   headerContainer.innerHTML = `<h1 style="font-family:var(--font-headline);font-size:var(--font-size-display);color:#fff;">Übersicht</h1>`;
 
-  const stats = await getOverviewStats(profile.id, profile.calorieGoal);
+  const stats = await getOverviewStats(profile.id, profile.calorieGoal, profile.tdee);
 
   const avgSleepLabel = stats.avgSleepQuality != null
     ? closestSchlafLabel(stats.avgSleepQuality)
@@ -53,6 +53,12 @@ export async function renderOverviewView(container, headerContainer, profile) {
       <h3>Bewegung</h3>
       <p class="overview-movement-line">🚶 ${stats.avgStepsPerDay != null ? `Ø ${formatNumberDE(stats.avgStepsPerDay)} Schritte/Tag` : "Keine Schritte erfasst"} · 🧘 ${stats.yogaDayCount}× Yoga · 🏋️ ${stats.activityDayCount}× Sport</p>
     </div>
+    ${stats.bestWeek && stats.bestWeek.score > 0 ? `
+    <div class="section-card">
+      <h3>🏆 Wochen-Highlight</h3>
+      <p class="overview-best-week">Beste Woche: ${stats.bestWeek.sportDays}× Sport, ${stats.bestWeek.deficitDays} Tage im Defizit, ${stats.bestWeek.meditationDays}× meditiert, ${stats.bestWeek.avgSteps != null ? `Ø ${formatNumberDE(stats.bestWeek.avgSteps)} Schritte` : "keine Schritte erfasst"} 🏆</p>
+    </div>
+    ` : ""}
     <div class="section-card">
       <h3>Kalorien-Trend</h3>
       ${renderLineChart(stats.kcalPoints, { ariaLabel: "Kalorien-Trend", height: 140 })}

@@ -12,6 +12,16 @@ import { formatNumberDE } from "../format.js";
 import { computeAndSaveDeficitStreak } from "../streak.js";
 import { celebrateMilestoneOnce, weightStepMilestone } from "../milestones.js";
 import { saveFoodDatabaseEntry, searchFoodDatabase, foodSizeOptions } from "../foodDb.js";
+import { saveSupplementDatabaseEntry, searchSupplementDatabase } from "../supplementDb.js";
+
+// Sanfte Erinnerung unter dem Wasser-Tracker, nur in der App sichtbar
+// (keine Push-Notification).
+function waterReminderText(waterMl) {
+  const pct = waterMl / WATER_GOAL_ML;
+  if (pct >= 1) return "Tagesziel erreicht! ✅";
+  if (pct >= 0.75) return "Fast geschafft! 💧";
+  return `Noch ${WATER_GOAL_ML - waterMl}ml bis zum Ziel 💧`;
+}
 
 // Deckel bei 800 kcal (≈ 20.000 Schritte) gegen unrealistisch hohe Boni.
 function stepsKcalBurn(steps) {
@@ -165,7 +175,7 @@ function kcalTotalHtml(log, profile, streak) {
     return `<h3>Kalorien heute</h3><p class="kcal-total-value">${total} kcal</p>`;
   }
 
-  const activityBurn = log.activities.reduce((sum, activity) => sum + activityKcalBurn(activity), 0);
+  const activityBurn = log.activities.reduce((sum, activity) => sum + activityKcalBurn(activity, log.date), 0);
   const yogaBurn = log.yoga.gemacht ? YOGA_KCAL_BURN : 0;
   const stepsBurn = stepsKcalBurn(log.steps);
   const tagesbedarf = baseGoal + activityBurn + yogaBurn + stepsBurn;
@@ -226,6 +236,7 @@ function supplementRowHtml(index, supplement) {
         <div style="flex:1;">
           <label for="supplement-${index}-name">Supplement</label>
           <input id="supplement-${index}-name" type="text" value="${escapeHtml(supplement.name || "")}">
+          <div class="food-suggestions" id="supplement-${index}-suggestions" hidden></div>
         </div>
         <button type="button" class="btn btn-secondary" data-remove-supplement="${index}" aria-label="Supplement entfernen" style="flex:0;">${ICON_TRASH}</button>
       </div>
@@ -288,6 +299,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
         <button type="button" class="water-stepper-btn" id="water-plus" aria-label="200 Milliliter hinzufügen">${ICON_WATER}</button>
       </div>
       <div class="water-progress"><div class="water-progress-fill" id="water-progress-fill" style="width:${Math.min(100, ((log.waterMl || 0) / WATER_GOAL_ML) * 100)}%"></div></div>
+      <p class="water-reminder" id="water-reminder">${waterReminderText(log.waterMl || 0)}</p>
     </div>
     <div class="section-card">
       <h3>${ICON_SLEEP} Schlaf</h3>
@@ -557,6 +569,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   function updateWaterDisplay() {
     container.querySelector("#water-sum").textContent = `${log.waterMl || 0} / ${WATER_GOAL_ML} ml`;
     container.querySelector("#water-progress-fill").style.width = `${Math.min(100, ((log.waterMl || 0) / WATER_GOAL_ML) * 100)}%`;
+    container.querySelector("#water-reminder").textContent = waterReminderText(log.waterMl || 0);
   }
 
   container.querySelector("#water-plus").addEventListener("click", () => {
@@ -637,14 +650,53 @@ export async function renderDailyLogView(container, headerContainer, profile, da
     });
   });
 
+  // Sobald Name und Emoji-Bewertung eines Supplements vorhanden sind,
+  // landet der Name automatisch in der persönlichen Supplements-Datenbank.
+  function trySaveSupplement(index) {
+    const supplement = log.supplements[index];
+    if (supplement.name && supplement.name.trim() && supplement.feeling != null) {
+      saveSupplementDatabaseEntry(supplement.name);
+    }
+  }
+
   function wireSupplementRow(index) {
     const row = container.querySelector(`[data-supplement-index="${index}"]`);
-    row.querySelector(`#supplement-${index}-name`).addEventListener("change", (e) => { log.supplements[index].name = e.target.value; persist(); });
+    const nameInput = row.querySelector(`#supplement-${index}-name`);
+    const suggestionsEl = row.querySelector(`#supplement-${index}-suggestions`);
+    nameInput.addEventListener("change", (e) => { log.supplements[index].name = e.target.value; persist(); trySaveSupplement(index); });
+    nameInput.addEventListener("input", async () => {
+      const query = nameInput.value.trim();
+      if (query.length < 2) {
+        suggestionsEl.hidden = true;
+        suggestionsEl.innerHTML = "";
+        return;
+      }
+      const matches = await searchSupplementDatabase(query);
+      if (!matches.length) {
+        suggestionsEl.hidden = true;
+        suggestionsEl.innerHTML = "";
+        return;
+      }
+      suggestionsEl.hidden = false;
+      suggestionsEl.innerHTML = matches.map((s) => `<button type="button" class="food-suggestion-btn" data-supplement-name="${escapeHtml(s.name)}">${escapeHtml(s.name)}</button>`).join("");
+      suggestionsEl.querySelectorAll("[data-supplement-name]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const name = btn.dataset.supplementName;
+          nameInput.value = name;
+          log.supplements[index].name = name;
+          suggestionsEl.hidden = true;
+          suggestionsEl.innerHTML = "";
+          persist();
+          trySaveSupplement(index);
+        });
+      });
+    });
     row.querySelectorAll(`[data-emoji-group="supplement-feeling-${index}"]`).forEach((btn) => {
       btn.addEventListener("click", () => {
         log.supplements[index].feeling = btn.dataset.emojiValue;
         row.querySelectorAll(`[data-emoji-group="supplement-feeling-${index}"]`).forEach((b) => b.classList.toggle("selected", b === btn));
         persist();
+        trySaveSupplement(index);
       });
     });
     row.querySelector(`[data-remove-supplement="${index}"]`).addEventListener("click", () => {

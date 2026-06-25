@@ -16,7 +16,7 @@ function dayKcalEaten(log) {
 // Yoga + Schritte (mit 800-kcal-Deckel) als Tagesbedarf, davon minus 500 als
 // Defizit-Ziel - damit Streak und Kalorien-Karte konsistent sind.
 function dayKcalGoal(log, tdee) {
-  const activityBurn = (log.activities || []).reduce((sum, activity) => sum + activityKcalBurn(activity), 0);
+  const activityBurn = (log.activities || []).reduce((sum, activity) => sum + activityKcalBurn(activity, log.date), 0);
   const yogaBurn = log.yoga?.gemacht ? YOGA_KCAL_BURN : 0;
   const stepsBurn = log.steps != null ? Math.min(800, Math.round(log.steps * STEP_KCAL_PER_STEP)) : 0;
   const tagesbedarf = tdee + activityBurn + yogaBurn + stepsBurn;
