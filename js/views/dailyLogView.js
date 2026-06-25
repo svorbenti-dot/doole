@@ -270,7 +270,7 @@ export async function renderDailyLogView(container, headerContainer, profile, da
   renderDateNav(headerContainer, dateISO, onDateChange);
   const log = await getDailyLog(profile.id, dateISO);
   // Der Streak bezieht sich immer auf "heute", nicht auf den gerade angezeigten Tag.
-  const streak = dateISO === todayISO() ? await computeAndSaveDeficitStreak(profile.id, profile.calorieGoal) : 0;
+  const streak = dateISO === todayISO() ? await computeAndSaveDeficitStreak(profile.id, profile.tdee) : 0;
 
   container.innerHTML = `
     ${tagesformCardHtml(log)}

@@ -2,7 +2,7 @@
 // Profils und speichert den Wert in IndexedDB (Store "settings").
 import { getAllItems, putItem } from "./db.js";
 import { addDaysISO, todayISO } from "./calendar.js";
-import { activityKcalBurn, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP } from "./dailyLog.js";
+import { activityKcalBurn, YOGA_KCAL_BURN, STEP_KCAL_PER_STEP, DAILY_DEFICIT_KCAL } from "./dailyLog.js";
 import { celebrateMilestoneOnce } from "./milestones.js";
 
 function dayKcalEaten(log) {
@@ -12,18 +12,22 @@ function dayKcalEaten(log) {
   return values.length ? values.reduce((a, b) => a + b, 0) : null;
 }
 
-function dayKcalGoal(log, baseGoal) {
+// Gleiche Berechnung wie kcalTotalHtml() in dailyLogView.js: TDEE + Sport +
+// Yoga + Schritte (mit 800-kcal-Deckel) als Tagesbedarf, davon minus 500 als
+// Defizit-Ziel - damit Streak und Kalorien-Karte konsistent sind.
+function dayKcalGoal(log, tdee) {
   const activityBurn = (log.activities || []).reduce((sum, activity) => sum + activityKcalBurn(activity), 0);
   const yogaBurn = log.yoga?.gemacht ? YOGA_KCAL_BURN : 0;
-  const stepsBurn = log.steps != null ? Math.round(log.steps * STEP_KCAL_PER_STEP) : 0;
-  return baseGoal + activityBurn + yogaBurn + stepsBurn;
+  const stepsBurn = log.steps != null ? Math.min(800, Math.round(log.steps * STEP_KCAL_PER_STEP)) : 0;
+  const tagesbedarf = tdee + activityBurn + yogaBurn + stepsBurn;
+  return tagesbedarf - DAILY_DEFICIT_KCAL;
 }
 
 // Zählt rückwärts ab heute, wie viele Tage in Folge im Defizit waren.
 // Der heutige Tag bricht die Serie nicht ab, wenn noch keine Kalorien
 // eingetragen sind (er wird einfach übersprungen, nicht gewertet).
-export async function computeAndSaveDeficitStreak(profileId, calorieGoal) {
-  if (calorieGoal == null) return 0;
+export async function computeAndSaveDeficitStreak(profileId, tdee) {
+  if (tdee == null) return 0;
 
   const allLogs = await getAllItems("dailyLogs");
   const byDate = new Map(
@@ -39,7 +43,7 @@ export async function computeAndSaveDeficitStreak(profileId, calorieGoal) {
     const eaten = log ? dayKcalEaten(log) : null;
 
     if (eaten != null) {
-      if (eaten < dayKcalGoal(log, calorieGoal)) {
+      if (eaten < dayKcalGoal(log, tdee)) {
         streak += 1;
         day = addDaysISO(day, -1);
         isToday = false;

@@ -1,10 +1,11 @@
 // Bildschirm: Einstellungen - Profil wechseln/löschen, Backup, Koerperdaten & Kalorienziel.
 import { getAllProfiles, deleteProfile, updateProfile } from "../profiles.js";
-import { ICON_TRASH } from "../icons.js";
+import { ICON_TRASH, ICON_PLUS } from "../icons.js";
 import { exportAllData, importAllData } from "../backup.js";
 import { calculateCalorieTargets, GENDER_OPTIONS, ACTIVITY_LEVELS } from "../calorieCalc.js";
 import { getLatestWeightEntry } from "../dailyLog.js";
 import { showToast } from "../toast.js";
+import { renderProfileSelect } from "./profileSelect.js";
 
 function calorieTargetsText(profile) {
   if (profile.calorieGoal == null) return "Trage Alter, Größe, Gewicht, Geschlecht und Aktivitätslevel ein, um ein Kalorienziel zu berechnen.";
@@ -18,7 +19,8 @@ export async function renderSettingsView(container, currentProfile, callbacks) {
     <h2 style="font-size:var(--font-size-section-title);color:var(--color-secondary);margin-bottom:var(--space-4);">Einstellungen</h2>
     <div class="section-card">
       <h3>Profile</h3>
-      <div id="settings-profile-list" style="display:flex;flex-direction:column;gap:var(--space-2);"></div>
+      <div id="settings-profile-list" style="display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-3);"></div>
+      <button type="button" id="add-profile-btn" class="btn btn-secondary">${ICON_PLUS} Neues Profil anlegen</button>
     </div>
     <div class="section-card">
       <h3>Körperdaten &amp; Kalorienziel</h3>
@@ -93,6 +95,10 @@ export async function renderSettingsView(container, currentProfile, callbacks) {
     row.appendChild(switchBtn);
     row.appendChild(deleteBtn);
     list.appendChild(row);
+  });
+
+  container.querySelector("#add-profile-btn").addEventListener("click", () => {
+    renderProfileSelect(container, callbacks.onProfileSwitch);
   });
 
   container.querySelector("#export-btn").addEventListener("click", () => exportAllData());
