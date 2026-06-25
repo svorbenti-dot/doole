@@ -199,15 +199,21 @@ export const SPORTARTEN = [
   { value: "turnen", emoji: "🤸", label: "Turnen", kcalPer30Min: 280 },
   { value: "tanzen", emoji: "💃", label: "Tanzen", kcalPer30Min: 250 },
   { value: "volleyball", emoji: "🏐", label: "Volleyball", kcalPer30Min: 200 },
+  // Arbeits-Kategorien: fester 8-Stunden-Tag (480 Min), fester Kalorienwert.
+  { value: "montage_leicht", emoji: "🔧", label: "Montage leicht (Bohren, Schrauben, Schienen montieren)", fixedKcal: 960, fixedMinutes: 480 },
+  { value: "montage_schwer", emoji: "🔨", label: "Montage schwer (Tragen, Heben, schwere Geräte)", fixedKcal: 1920, fixedMinutes: 480 },
+  { value: "baustelle", emoji: "🏗️", label: "Baustelle (körperlich, viel Laufen und Tragen)", fixedKcal: 2400, fixedMinutes: 480 },
 ];
 
-// Berechnet den Kalorienverbrauch einer Sportart-Aktivität anteilig zur
+// Berechnet den Kalorienverbrauch einer Sportart-Aktivität: bei den
+// Arbeits-Kategorien ein fester Wert (8-Stunden-Tag), sonst anteilig zur
 // tatsächlichen Dauer (z.B. 15 Min Joggen = 200 kcal). Gibt null zurück,
 // wenn keine Sportart aus der Liste gewählt wurde.
 export function sportActivityKcalBurn(activity) {
   if (!activity.sport) return null;
   const sport = SPORTARTEN.find((s) => s.value === activity.sport);
   if (!sport) return null;
+  if (sport.fixedKcal != null) return sport.fixedKcal;
   return Math.round(((activity.dauerMin || 0) / 30) * sport.kcalPer30Min);
 }
 

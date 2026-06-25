@@ -250,12 +250,14 @@ function supplementRowHtml(index, supplement) {
 
 function activityRowHtml(index, activity) {
   const kcalPreview = sportActivityKcalBurn(activity);
+  const selectedSport = SPORTARTEN.find((s) => s.value === activity.sport);
+  const isFixedDuration = selectedSport != null && selectedSport.fixedMinutes != null;
   return `
     <div class="field" data-activity-index="${index}">
       <label for="activity-${index}-sport">Sportart (optional)</label>
       <select id="activity-${index}-sport">
         <option value="">– Eigene Eingabe –</option>
-        ${SPORTARTEN.map((s) => `<option value="${s.value}" ${activity.sport === s.value ? "selected" : ""}>${s.emoji} ${s.label} (${s.kcalPer30Min} kcal/30 Min)</option>`).join("")}
+        ${SPORTARTEN.map((s) => `<option value="${s.value}" ${activity.sport === s.value ? "selected" : ""}>${s.emoji} ${s.label} (${s.fixedKcal != null ? `${s.fixedKcal} kcal fest, 8 Std` : `${s.kcalPer30Min} kcal/30 Min`})</option>`).join("")}
       </select>
       <div style="display:flex;gap:var(--space-2);align-items:flex-end;margin-top:var(--space-2);">
         <div style="flex:2;">
@@ -264,7 +266,7 @@ function activityRowHtml(index, activity) {
         </div>
         <div style="flex:1;">
           <label for="activity-${index}-dauer">Dauer (Min)</label>
-          <input id="activity-${index}-dauer" type="number" min="0" value="${activity.dauerMin ?? ""}">
+          <input id="activity-${index}-dauer" type="number" min="0" value="${activity.dauerMin ?? ""}" ${isFixedDuration ? "disabled" : ""}>
         </div>
         <button type="button" class="btn btn-secondary" data-remove-activity="${index}" aria-label="Aktivität entfernen" style="flex:0;">${ICON_TRASH}</button>
       </div>
@@ -722,6 +724,9 @@ export async function renderDailyLogView(container, headerContainer, profile, da
       if (sportValue) {
         const sport = SPORTARTEN.find((s) => s.value === sportValue);
         log.activities[index].art = `${sport.emoji} ${sport.label}`;
+        if (sport.fixedMinutes != null) {
+          log.activities[index].dauerMin = sport.fixedMinutes;
+        }
       }
       persist();
       renderDailyLogView(container, headerContainer, profile, dateISO, onDateChange);

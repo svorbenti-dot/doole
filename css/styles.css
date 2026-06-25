@@ -121,6 +121,12 @@ h1, h2, h3 {
   color: var(--color-text);
 }
 
+.field input:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
 /* Essen-Datenbank: Autocomplete-Vorschläge + Größen-Buttons */
 .food-suggestions {
   display: flex;
